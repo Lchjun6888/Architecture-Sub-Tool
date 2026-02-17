@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
+import { jsPDF } from 'jspdf';
 import {
     Upload, Layers, ZoomIn, ZoomOut, Download, RotateCw,
     FileDown, ChevronLeft, ChevronRight,
@@ -246,6 +247,42 @@ const PDFComparer = () => {
         link.click();
     };
 
+    const downloadAllAsPdf = async () => {
+        if (diffResults.length === 0) return;
+
+        setProgressText('Generating PDF Report...');
+        setIsComparing(true);
+
+        try {
+            // Use dimensions from first page for setup
+            const firstPage = diffResults[0];
+            const pdf = new jsPDF({
+                orientation: firstPage.width > firstPage.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [firstPage.width, firstPage.height]
+            });
+
+            for (let i = 0; i < diffResults.length; i++) {
+                const res = diffResults[i];
+                // Add page if not first
+                if (i > 0) {
+                    pdf.addPage([res.width, res.height], res.width > res.height ? 'l' : 'p');
+                }
+                pdf.addImage(res.diffDataUrl, 'PNG', 0, 0, res.width, res.height);
+                setProgress(Math.round(((i + 1) / diffResults.length) * 100));
+            }
+
+            pdf.save('Drawing_Revision_Report.pdf');
+            setProgressText('PDF Export Successful');
+        } catch (err) {
+            console.error(err);
+            setProgressText('PDF Export Failed');
+        } finally {
+            setIsComparing(false);
+            setTimeout(() => setProgressText(''), 3000);
+        }
+    };
+
     // --- Render Helpers ---
     return (
         <div className="space-y-6 pb-20 animate-in fade-in duration-500">
@@ -305,12 +342,20 @@ const PDFComparer = () => {
                     </button>
 
                     {diffResults.length > 0 && (
-                        <button
-                            onClick={downloadAllAsZip}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all"
-                        >
-                            <FileDown size={18} /> ZIP All
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={downloadAllAsPdf}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-black shadow-lg shadow-black/30 hover:bg-slate-900 transition-all border border-slate-700"
+                            >
+                                <FileText size={18} /> Export PDF
+                            </button>
+                            <button
+                                onClick={downloadAllAsZip}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all"
+                            >
+                                <FileDown size={18} /> ZIP All
+                            </button>
+                        </div>
                     )}
                 </div>
             </header>
