@@ -145,22 +145,22 @@ const PDFComparer = () => {
                     r2 = data2[i2]; g2 = data2[i2 + 1]; b2 = data2[i2 + 2];
                 }
 
-                const avg1 = (r1 + g1 + b1) / 3;
-                const avg2 = (r2 + g2 + b2) / 3;
-                const base = 245 + (avg1 + avg2) / 20; // Very light background
+                const grayBase = (r1 + g1 + b1) / 3;
+                const displayGray = 230 + (grayBase / 15); // Keep lines visible but very light
 
                 if (isReal && diffMask[y * width + x]) {
                     // Difference detected
                     if (r1 < r2 - 20 || g1 < g2 - 20 || b1 < b2 - 20) {
-                        // Added (Blue)
-                        out[i] = 37; out[i + 1] = 99; out[i + 2] = 235; out[i + 3] = 255;
+                        // Added (Blue) - Stronger visibility
+                        out[i] = 10; out[i + 1] = 80; out[i + 2] = 255; out[i + 3] = 255;
                     } else {
-                        // Removed (Red)
-                        out[i] = 220; out[i + 1] = 38; out[i + 2] = 38; out[i + 3] = 255;
+                        // Removed (Red) - Stronger visibility
+                        out[i] = 255; out[i + 1] = 30; out[i + 2] = 30; out[i + 3] = 255;
                     }
                     visibleDiffCount++;
                 } else {
-                    out[i] = out[i + 1] = out[i + 2] = base;
+                    // Clear background lines
+                    out[i] = out[i + 1] = out[i + 2] = displayGray;
                     out[i + 3] = 255;
                 }
             }
@@ -414,8 +414,8 @@ const PDFComparer = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6 items-stretch">
                         {/* LEFT: Thumbnail Sidebar */}
-                        <aside className="w-full lg:w-72 flex-shrink-0">
-                            <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col h-[75vh] shadow-lg sticky top-28">
+                        <aside className="w-full lg:w-80 flex-shrink-0">
+                            <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col h-[82vh] shadow-lg sticky top-28">
                                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                     <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Document Pages</h3>
                                     <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{diffResults.length}</span>
@@ -453,7 +453,7 @@ const PDFComparer = () => {
                         {/* CENTER: Main Multi-Panel View */}
                         <div className="flex-1 min-w-0">
                             {diffResults[viewPage] && (
-                                <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden h-[75vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:bg-slate-900/50">
+                                <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden h-[82vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:bg-slate-900/50">
                                     {/* Sub-Header / Toggles */}
                                     <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-8 py-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 z-10">
                                         <div className="flex items-center gap-5">
@@ -506,9 +506,9 @@ const PDFComparer = () => {
                                     <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-4 lg:p-6">
                                         {compareMode === 'diff' ? (
                                             /* THE 3-PANEL CENTERED VIEW */
-                                            <div className="flex gap-6 min-h-full items-start justify-center min-w-[1200px]">
+                                            <div className="flex gap-8 min-h-full items-start justify-center min-w-max px-4">
                                                 {/* Left Panel: Original */}
-                                                <div className="flex-1 max-w-[400px] flex flex-col gap-3 group">
+                                                <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
                                                     <div className="flex items-center gap-2 px-2">
                                                         <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">01. Original Before</span>
                                                     </div>
@@ -519,7 +519,7 @@ const PDFComparer = () => {
                                                 </div>
 
                                                 {/* Center Panel: THE DIFF (Visual Result) */}
-                                                <div className="flex-[1.5] max-w-[600px] flex flex-col gap-3 group">
+                                                <div className="flex-[1.5] min-w-[500px] max-w-[850px] flex flex-col gap-3 group">
                                                     <div className="flex items-center justify-center gap-2">
                                                         <div className="h-[2px] w-8 bg-blue-500/20 rounded-full" />
                                                         <span className="text-[11px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em]">ANALYSIS PREVIEW</span>
@@ -532,7 +532,7 @@ const PDFComparer = () => {
                                                 </div>
 
                                                 {/* Right Panel: Revised */}
-                                                <div className="flex-1 max-w-[400px] flex flex-col gap-3 group">
+                                                <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
                                                     <div className="flex items-center justify-end gap-2 px-2 text-right">
                                                         <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">02. Revised After</span>
                                                     </div>
@@ -545,7 +545,7 @@ const PDFComparer = () => {
                                         ) : (
                                             /* SINGLE OVERLAY VIEW */
                                             <div className="flex justify-center min-h-full items-center p-4">
-                                                <div className="relative max-w-4xl w-full group">
+                                                <div className="relative max-w-5xl w-full group">
                                                     <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-[40px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                                                     <img
                                                         src={diffResults[viewPage].diffDataUrl}

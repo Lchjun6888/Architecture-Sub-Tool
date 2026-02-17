@@ -131,7 +131,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                     </div>
                 </header>
 
-                <div className="p-4 lg:p-10 max-w-6xl mx-auto">
+                <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
                     {children}
                 </div>
                 <HelpGuide />
