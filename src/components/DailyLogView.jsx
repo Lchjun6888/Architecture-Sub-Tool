@@ -170,6 +170,7 @@ const DailyLogView = () => {
     };
 
     const fetchHistory = async () => {
+        if (!supabase) return;
         try {
             const { data, error } = await supabase
                 .from('daily_logs')
@@ -187,6 +188,11 @@ const DailyLogView = () => {
 
     const handleSave = async () => {
         setLoading(true);
+        if (!supabase) {
+            alert('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env');
+            setLoading(false);
+            return;
+        }
         try {
             const { error } = await supabase
                 .from('daily_logs')
