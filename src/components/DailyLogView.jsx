@@ -3,7 +3,7 @@ import {
     Calendar, Users, HardHat, Activity,
     Target, Save, History,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
-    Plus, Trash2, ChevronDown
+    Plus, Trash2, ChevronDown, Tool
 } from 'lucide-react';
 // Supabase 연동은 나중에 추가 예정
 // import { supabase } from '../supabaseClient';
