@@ -130,21 +130,33 @@ const StatCard = ({ icon, label, value, trend }) => (
     </div>
 );
 
-const ToolCard = ({ title, desc, icon, color, onClick }) => (
-    <div
-        onClick={onClick}
-        className="group relative bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer overflow-hidden h-full flex flex-col items-start"
-    >
-        <div className={`p-4 rounded-2xl bg-${color}-500/10 text-${color}-500 mb-6 group-hover:scale-110 transition-transform`}>
-            {icon}
+const ToolCard = ({ title, desc, icon, color, onClick }) => {
+    const colorClasses = {
+        blue: 'bg-blue-500/10 text-blue-500 hover:border-blue-500/50',
+        indigo: 'bg-indigo-500/10 text-indigo-500 hover:border-indigo-500/50',
+        emerald: 'bg-emerald-500/10 text-emerald-500 hover:border-emerald-500/50',
+        orange: 'bg-orange-500/10 text-orange-500 hover:border-orange-500/50',
+        amber: 'bg-amber-500/10 text-amber-500 hover:border-amber-500/50'
+    };
+
+    const currentClasses = colorClasses[color] || colorClasses.blue;
+
+    return (
+        <div
+            onClick={onClick}
+            className={`group relative bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 transition-all cursor-pointer overflow-hidden h-full flex flex-col items-start ${currentClasses.split(' ').pop()}`}
+        >
+            <div className={`p-4 rounded-2xl ${currentClasses.split(' ').slice(0, 2).join(' ')} mb-6 group-hover:scale-110 transition-transform`}>
+                {icon}
+            </div>
+            <h4 className="text-xl font-black dark:text-white mb-2">{title}</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{desc}</p>
+            <div className="mt-auto flex items-center gap-2 text-sm font-black text-blue-500">
+                Open Tool <ArrowUpRight size={16} />
+            </div>
         </div>
-        <h4 className="text-xl font-black dark:text-white mb-2">{title}</h4>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{desc}</p>
-        <div className="mt-auto flex items-center gap-2 text-sm font-black text-blue-500">
-            Open Tool <ArrowUpRight size={16} />
-        </div>
-    </div>
-);
+    );
+};
 
 const ActivityItem = ({ title, time, type }) => (
     <div className="flex items-start gap-4">
