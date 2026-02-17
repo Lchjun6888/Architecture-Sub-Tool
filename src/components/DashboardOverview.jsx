@@ -53,7 +53,7 @@ const DashboardOverview = ({ onNav }) => {
                     <div className="flex justify-between items-end">
                         <h3 className="text-xl font-black dark:text-white">Active Tools</h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <ToolCard
                             title="Excel Splitter"
                             desc="Professional row-based & keyword logic splitting."
@@ -67,6 +67,13 @@ const DashboardOverview = ({ onNav }) => {
                             icon={<Layers size={32} />}
                             color="indigo"
                             onClick={() => onNav('pdf')}
+                        />
+                        <ToolCard
+                            title="Daily Construction Log"
+                            desc="Track labor attendance & automated tax calculations."
+                            icon={<Zap size={32} />}
+                            color="emerald"
+                            onClick={() => onNav('logs')}
                         />
                     </div>
                 </div>
