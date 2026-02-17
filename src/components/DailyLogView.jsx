@@ -3,7 +3,7 @@ import {
     Calendar, Users, HardHat, Activity,
     Target, Save, History,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
-    Plus, Trash2, ChevronDown, Tool
+    Plus, Trash2, ChevronDown, Wrench
 } from 'lucide-react';
 // Supabase 연동은 나중에 추가 예정
 // import { supabase } from '../supabaseClient';
@@ -508,7 +508,7 @@ const DailyLogView = () => {
                             <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
                                 <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
                                     <div className="flex items-center gap-3">
-                                        <Tool size={18} className="text-orange-500" />
+                                        <Wrench size={18} className="text-orange-500" />
                                         <h4 className="font-black text-sm dark:text-white">Equipment Log</h4>
                                     </div>
                                     <button

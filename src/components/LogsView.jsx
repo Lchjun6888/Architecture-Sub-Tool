@@ -46,7 +46,7 @@ const LogsView = () => {
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <Construction className="text-blue-500" size={32} />
-                        Daily Technical Report
+                        Activity History
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-1">Record on-site activities, equipment usage, and progress.</p>
                 </div>
