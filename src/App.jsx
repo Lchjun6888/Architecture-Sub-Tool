@@ -6,10 +6,11 @@ import PDFComparer from './components/PDFComparer'
 import DashboardOverview from './components/DashboardOverview'
 import SettingsView from './components/SettingsView'
 import LogsView from './components/LogsView'
+import PayrollView from './components/PayrollView'
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' | 'app'
-  const [activeSubView, setActiveSubView] = useState('overview'); // 'excel' | 'pdf' | 'overview' | 'settings' | 'logs'
+  const [activeSubView, setActiveSubView] = useState('overview'); // 'excel' | 'pdf' | 'overview' | 'settings' | 'logs' | 'payroll'
 
   if (view === 'landing') {
     return <LandingPage onStart={() => setView('app')} />
@@ -25,6 +26,7 @@ function App() {
       {activeSubView === 'excel' && <ExcelSplitter />}
       {activeSubView === 'pdf' && <PDFComparer />}
       {activeSubView === 'logs' && <LogsView />}
+      {activeSubView === 'payroll' && <PayrollView />}
       {activeSubView === 'settings' && <SettingsView />}
     </DashboardLayout>
   )

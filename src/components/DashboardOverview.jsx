@@ -53,27 +53,34 @@ const DashboardOverview = ({ onNav }) => {
                     <div className="flex justify-between items-end">
                         <h3 className="text-xl font-black dark:text-white">Active Tools</h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <ToolCard
                             title="Excel Splitter"
-                            desc="Professional row-based & keyword logic splitting."
+                            desc="Split large BOM/Schedules."
                             icon={<FileSpreadsheet size={32} />}
                             color="blue"
                             onClick={() => onNav('excel')}
                         />
                         <ToolCard
-                            title="PDF Comparer"
-                            desc="Visual comparison for architecture blueprints."
+                            title="PDF Compare"
+                            desc="Blueprint revision analysis."
                             icon={<Layers size={32} />}
                             color="indigo"
                             onClick={() => onNav('pdf')}
                         />
                         <ToolCard
-                            title="Daily Construction Log"
-                            desc="Track labor attendance & automated tax calculations."
+                            title="Technical Log"
+                            desc="Tasks, Equipment & Site Summary."
                             icon={<Zap size={32} />}
-                            color="emerald"
+                            color="blue"
                             onClick={() => onNav('logs')}
+                        />
+                        <ToolCard
+                            title="Payroll & Tax"
+                            desc="Attendance & automated taxes."
+                            icon={<Users size={32} />}
+                            color="emerald"
+                            onClick={() => onNav('payroll')}
                         />
                     </div>
                 </div>
