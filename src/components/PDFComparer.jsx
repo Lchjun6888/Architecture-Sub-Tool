@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import {
     Upload, Layers, ZoomIn, ZoomOut, Download, RotateCw,
-    FileDown, ChevronLeft, ChevronRight, Eye, Split,
+    FileDown, ChevronLeft, ChevronRight,
     Maximize2, FileText, CheckCircle2, AlertCircle, RefreshCw
 } from 'lucide-react';
 
@@ -21,8 +21,7 @@ const PDFComparer = () => {
     const [progressText, setProgressText] = useState('');
     const [diffResults, setDiffResults] = useState([]);
     const [viewPage, setViewPage] = useState(0);
-    const [compareMode, setCompareMode] = useState('overlay'); // 'diff' | 'overlay' | 'side' | 'slider'
-    const [sliderPos, setSliderPos] = useState(50);
+    const [compareMode, setCompareMode] = useState('overlay'); // 'diff' | 'overlay'
 
     const pdfBeforeRef = useRef(null);
     const pdfAfterRef = useRef(null);
@@ -130,6 +129,8 @@ const PDFComparer = () => {
 
         // Pass 3: Render
         let visibleDiffCount = 0;
+        let additions = 0;
+        let deletions = 0;
         const out = diffImg.data;
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
@@ -147,20 +148,21 @@ const PDFComparer = () => {
                 }
 
                 const grayBase = (r1 + g1 + b1) / 3;
-                const displayGray = 120 + (grayBase * 0.53); // Significant improvement in line visibility (Black becomes #787878)
+                const displayGray = 120 + (grayBase * 0.53); // Line visibility improvement
 
                 if (isReal && diffMask[y * width + x]) {
                     // Difference detected
                     if (r1 < r2 - 20 || g1 < g2 - 20 || b1 < b2 - 20) {
-                        // Added (Blue) - Stronger visibility
+                        // Added (Blue)
                         out[i] = 0; out[i + 1] = 70; out[i + 2] = 255; out[i + 3] = 255;
+                        additions++;
                     } else {
-                        // Removed (Red) - Stronger visibility
+                        // Removed (Red)
                         out[i] = 255; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = 255;
+                        deletions++;
                     }
                     visibleDiffCount++;
                 } else {
-                    // Clear background lines - much more visible now
                     out[i] = out[i + 1] = out[i + 2] = displayGray;
                     out[i + 3] = 255;
                 }
@@ -173,6 +175,8 @@ const PDFComparer = () => {
             diffDataUrl: canvas.toDataURL('image/png'),
             hasDiff,
             diffPixels: visibleDiffCount,
+            additions,
+            deletions,
             diffPercent: ((visibleDiffCount / (width * height)) * 100).toFixed(2),
             width, height
         };
@@ -415,10 +419,10 @@ const PDFComparer = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6 items-stretch">
                         {/* LEFT: Thumbnail Sidebar */}
-                        <aside className="w-full lg:w-80 flex-shrink-0">
+                        <aside className="w-full lg:w-72 flex-shrink-0">
                             <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col h-[82vh] shadow-lg sticky top-28">
                                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                                    <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Document Pages</h3>
+                                    <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Page List</h3>
                                     <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{diffResults.length}</span>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -440,11 +444,15 @@ const PDFComparer = () => {
                                             <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[9px] text-white font-black shadow-lg">
                                                 P. {result.pageNum}
                                             </div>
-                                            {result.hasDiff && (
+                                            {parseFloat(result.diffPercent) > 0.05 ? (
                                                 <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-500 text-white px-1.5 py-0.5 rounded-md text-[8px] font-black shadow-lg animate-pulse">
-                                                    DIFF detected
+                                                    DIFF
                                                 </div>
-                                            )}
+                                            ) : parseFloat(result.diffPercent) > 0 ? (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-500 text-white px-1.5 py-0.5 rounded-md text-[8px] font-black shadow-lg">
+                                                    MINOR
+                                                </div>
+                                            ) : null}
                                         </button>
                                     ))}
                                 </div>
@@ -452,155 +460,167 @@ const PDFComparer = () => {
                         </aside>
 
                         {/* CENTER: Main Multi-Panel View */}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex flex-col lg:flex-row gap-6">
                             {diffResults[viewPage] && (
-                                <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden h-[82vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:bg-slate-900/50">
-                                    {/* Sub-Header / Toggles */}
-                                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-8 py-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 z-10">
-                                        <div className="flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-black text-lg">
-                                                {diffResults[viewPage].pageNum}
+                                <>
+                                    <div className="flex-1 min-w-0 glass rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden h-[82vh] flex flex-col shadow-xl dark:bg-slate-900/50 transition-all">
+                                        {/* Sub-Header / Toggles */}
+                                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-8 py-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 z-10">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-black text-lg">
+                                                    {diffResults[viewPage].pageNum}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white leading-none mb-1 flex items-center gap-2">
+                                                        Visual Comparison
+                                                        {parseFloat(diffResults[viewPage].diffPercent) > 0.05 ? <AlertCircle size={16} className="text-red-500" /> : <CheckCircle2 size={16} className="text-emerald-500" />}
+                                                    </h4>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${parseFloat(diffResults[viewPage].diffPercent) > 0.05 ? 'text-red-500' : 'text-emerald-600'}`}>
+                                                        {parseFloat(diffResults[viewPage].diffPercent) > 0.05
+                                                            ? `${diffResults[viewPage].diffPercent}% CHANGE DETECTED`
+                                                            : parseFloat(diffResults[viewPage].diffPercent) > 0
+                                                                ? `${diffResults[viewPage].diffPercent}% (NEGLIGIBLE / NO CHANGE)`
+                                                                : 'PERFECT MATCH'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <h4 className="text-xl font-black text-slate-800 dark:text-white leading-none mb-1 flex items-center gap-2">
-                                                    Revision Analysis
-                                                    {diffResults[viewPage].hasDiff ? <AlertCircle size={16} className="text-red-500" /> : <CheckCircle2 size={16} className="text-emerald-500" />}
-                                                </h4>
-                                                <span className={`text-xs font-bold uppercase tracking-widest ${diffResults[viewPage].hasDiff ? 'text-red-500' : 'text-emerald-500'}`}>
-                                                    {diffResults[viewPage].hasDiff ? `${diffResults[viewPage].diffPercent}% change detected in this page` : 'Perfect Match (No changes)'}
-                                                </span>
+
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[22px] shadow-inner">
+                                                    <button
+                                                        onClick={() => setCompareMode('overlay')}
+                                                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'overlay' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        <Maximize2 size={14} /> RESULT
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setCompareMode('diff')}
+                                                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        <Layers size={14} /> 3-PANEL
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={() => downloadSingleDiff(diffResults[viewPage])}
+                                                    className="w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                                    title="Download"
+                                                >
+                                                    <Download size={20} />
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[22px] shadow-inner">
-                                                <button
-                                                    onClick={() => setCompareMode('overlay')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'overlay' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
-                                                >
-                                                    <Maximize2 size={14} /> RESULT
-                                                </button>
-                                                <button
-                                                    onClick={() => setCompareMode('slider')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'slider' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
-                                                >
-                                                    <Split size={14} /> SLIDER
-                                                </button>
-                                                <button
-                                                    onClick={() => setCompareMode('side')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'side' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
-                                                >
-                                                    <Eye size={14} /> 2-PANEL
-                                                </button>
-                                                <button
-                                                    onClick={() => setCompareMode('diff')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
-                                                >
-                                                    <Layers size={14} /> 3-PANEL
-                                                </button>
-                                            </div>
-                                            <button
-                                                onClick={() => downloadSingleDiff(diffResults[viewPage])}
-                                                className="w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
-                                                title="Download this page"
-                                            >
-                                                <Download size={20} />
-                                            </button>
+                                        {/* Viewport Area */}
+                                        <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-6">
+                                            {compareMode === 'diff' ? (
+                                                <div className="flex gap-8 min-h-full items-start justify-center min-w-max px-4">
+                                                    <div className="flex-1 min-w-[340px] max-w-[500px] flex flex-col gap-3">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 italic">01. BEFORE (Original)</span>
+                                                        <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-lg">
+                                                            <img src={diffResults[viewPage].beforeDataUrl} alt="" className="w-full h-auto" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-[1.5] min-w-[500px] max-w-[800px] flex flex-col gap-3">
+                                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] text-center bg-blue-50 dark:bg-blue-900/20 py-1 rounded-full">DIFFERENCE ANALYSIS RESULT</span>
+                                                        <div className="rounded-[32px] overflow-hidden border-4 border-white dark:border-slate-800 bg-white shadow-2xl scale-[1.02]">
+                                                            <img src={diffResults[viewPage].diffDataUrl} alt="" className="w-full h-auto" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 min-w-[340px] max-w-[500px] flex flex-col gap-3">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-right px-2 italic">02. AFTER (Modified)</span>
+                                                        <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-lg">
+                                                            <img src={diffResults[viewPage].afterDataUrl} alt="" className="w-full h-auto" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-center h-full items-center">
+                                                    <div className="relative h-full w-full group flex items-center justify-center">
+                                                        <div className="absolute inset-0 bg-blue-500/5 rounded-[40px] blur-3xl opacity-50" />
+                                                        <img
+                                                            src={diffResults[viewPage].diffDataUrl}
+                                                            alt="Diff"
+                                                            className="relative max-w-full max-h-full object-contain shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-3xl"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Interactive Scroll Area */}
-                                    <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-6">
-                                        {compareMode === 'diff' && (
-                                            /* --- 3-PANEL VIEW --- */
-                                            <div className="flex gap-8 min-h-full items-start justify-center min-w-max px-4">
-                                                <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">01. BEFORE</span>
-                                                    <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl min-w-[300px]">
-                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="" className="w-full h-auto" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-[1.5] min-w-[500px] max-w-[850px] flex flex-col gap-3 group">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center">ANALYSIS RESULT</span>
-                                                    <div className="rounded-[32px] overflow-hidden border-4 border-white dark:border-slate-800 bg-white shadow-2xl scale-[1.02]">
-                                                        <img src={diffResults[viewPage].diffDataUrl} alt="" className="w-full h-auto" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right px-2">02. AFTER</span>
-                                                    <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl min-w-[300px]">
-                                                        <img src={diffResults[viewPage].afterDataUrl} alt="" className="w-full h-auto" />
-                                                    </div>
-                                                </div>
+                                    {/* RIGHT: Analysis Report Sidebar */}
+                                    <aside className="w-full lg:w-80 flex-shrink-0">
+                                        <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col h-[82vh] shadow-lg sticky top-28 bg-white/50 dark:bg-slate-900/50">
+                                            <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                                                <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Analysis Report</h3>
                                             </div>
-                                        )}
-
-                                        {compareMode === 'overlay' && (
-                                            /* --- SINGLE RESULT VIEW --- */
-                                            <div className="flex justify-center h-full items-center">
-                                                <div className="relative h-full w-full group flex items-center justify-center">
-                                                    <div className="absolute inset-0 bg-blue-500/5 rounded-[40px] blur-3xl" />
-                                                    <img
-                                                        src={diffResults[viewPage].diffDataUrl}
-                                                        alt="Comparison Result"
-                                                        className="relative max-w-full max-h-full object-contain shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {compareMode === 'side' && (
-                                            /* --- SIDE-BY-SIDE (2-PANEL) --- */
-                                            <div className="flex gap-6 h-full w-full">
-                                                <div className="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col">
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest flex-none">Original Before</div>
-                                                    <div className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-slate-50/30">
-                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="" className="max-w-full max-h-full object-contain shadow-sm" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col">
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest flex-none">Revised After</div>
-                                                    <div className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-slate-50/30">
-                                                        <img src={diffResults[viewPage].afterDataUrl} alt="" className="max-w-full max-h-full object-contain shadow-sm" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {compareMode === 'slider' && (
-                                            /* --- INTERACTIVE SLIDER VIEW --- */
-                                            <div className="flex justify-center h-full items-center">
-                                                <div className="relative max-w-full max-h-full aspect-[4/3] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 select-none">
-                                                    <img src={diffResults[viewPage].afterDataUrl} className="absolute inset-0 w-full h-full object-contain" alt="After" />
-                                                    <div
-                                                        className="absolute inset-0 overflow-hidden border-r-2 border-white/50"
-                                                        style={{ width: `${sliderPos}%` }}
-                                                    >
-                                                        <img src={diffResults[viewPage].beforeDataUrl} className="absolute inset-0 w-full h-full object-contain" alt="Before" style={{ width: `calc(100% * (100 / ${sliderPos}))` }} />
-                                                    </div>
-                                                    <div
-                                                        className="absolute inset-y-0 z-10 w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] cursor-col-resize group"
-                                                        style={{ left: `${sliderPos}%` }}
-                                                    >
-                                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-xl flex items-center justify-center border-4 border-blue-500 scale-100 group-hover:scale-110 transition-transform">
-                                                            <div className="flex gap-1">
-                                                                <div className="w-1 h-3 bg-blue-500 rounded-full" />
-                                                                <div className="w-1 h-3 bg-blue-500 rounded-full" />
+                                            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                                                {/* Stats Section */}
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-1 gap-3">
+                                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                                            <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Deviations</div>
+                                                            <div className="text-2xl font-black dark:text-white">{(diffResults[viewPage].diffPixels / 1000).toFixed(1)}k <span className="text-xs font-medium text-slate-400 ml-1">px</span></div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-2xl border border-red-100 dark:border-red-900/20">
+                                                                <div className="text-[10px] font-black text-red-500 uppercase mb-1">Deletions</div>
+                                                                <div className="text-xl font-black text-red-600">{(diffResults[viewPage].deletions / 1000).toFixed(1)}k</div>
+                                                            </div>
+                                                            <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+                                                                <div className="text-[10px] font-black text-blue-500 uppercase mb-1">Additions</div>
+                                                                <div className="text-xl font-black text-blue-600">{(diffResults[viewPage].additions / 1000).toFixed(1)}k</div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <input
-                                                        type="range" min="0" max="100" value={sliderPos}
-                                                        onChange={(e) => setSliderPos(e.target.value)}
-                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-20"
-                                                    />
-                                                    <div className="absolute bottom-6 left-6 px-4 py-2 bg-slate-900/60 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">BEFORE</div>
-                                                    <div className="absolute bottom-6 right-6 px-4 py-2 bg-blue-600/80 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">AFTER</div>
+                                                </div>
+
+                                                {/* Summary Text Section */}
+                                                <div className="space-y-4">
+                                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 pb-2">Revision Summary</h4>
+                                                    <div className="space-y-3">
+                                                        {parseFloat(diffResults[viewPage].diffPercent) > 0.05 ? (
+                                                            <>
+                                                                <div className="flex gap-3">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-none" />
+                                                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                                                                        Significant modifications detected. Please review the highlighted red and blue regions carefully.
+                                                                    </p>
+                                                                </div>
+                                                                <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 dark:shadow-none">
+                                                                    <div className="text-[9px] font-black text-slate-400 uppercase mb-2">Automated Insight</div>
+                                                                    <p className="text-[11px] font-bold leading-relaxed">
+                                                                        Detected {diffResults[viewPage].deletions > diffResults[viewPage].additions ? 'more removals than additions' : 'more additions than removals'}.
+                                                                        Typical of {diffResults[viewPage].deletions > diffResults[viewPage].additions ? 'detail cleaning or dimension reduction' : 'new annotations or structural additions'}.
+                                                                    </p>
+                                                                </div>
+                                                            </>
+                                                        ) : parseFloat(diffResults[viewPage].diffPercent) > 0 ? (
+                                                            <div className="flex gap-3 bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl">
+                                                                <CheckCircle2 size={16} className="text-emerald-500 flex-none" />
+                                                                <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                                                                    Minor noise detected but visually equivalent to the original. This is considered "NO CHANGE".
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex gap-3 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl">
+                                                                <CheckCircle2 size={16} className="text-blue-500 flex-none" />
+                                                                <p className="text-[11px] font-bold text-blue-700 dark:text-blue-400 leading-relaxed">
+                                                                    Page pixels are identical. No revision found.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
+                                            <div className="p-5 border-t border-slate-100 dark:border-slate-800">
+                                                <button className="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                                    Archive Report
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </aside>
+                                </>
                             )}
                         </div>
                     </div>
