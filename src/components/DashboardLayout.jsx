@@ -68,7 +68,8 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                     <NavItem icon={<LayoutDashboard size={20} />} label="Overview" onClick={() => handleNavClick('overview')} active={activeNav === 'overview'} />
                     <NavItem icon={<Scissors size={20} />} label="Excel Splitter" onClick={() => handleNavClick('excel')} active={activeNav === 'excel'} />
                     <NavItem icon={<Layers size={20} />} label="PDF Compare" onClick={() => handleNavClick('pdf')} active={activeNav === 'pdf'} />
-                    <NavItem icon={<History size={20} />} label="Daily Technical Log" onClick={() => handleNavClick('logs')} active={activeNav === 'logs'} />
+                    <NavItem icon={<History size={20} />} label="Daily Technical Log" onClick={() => handleNavClick('daily')} active={activeNav === 'daily'} />
+                    <NavItem icon={<Bell size={20} />} label="Activity History" onClick={() => handleNavClick('logs')} active={activeNav === 'logs'} />
                     <NavItem icon={<Users size={20} />} label="Attendance & Payroll" onClick={() => handleNavClick('payroll')} active={activeNav === 'payroll'} />
                     <NavItem icon={<Settings size={20} />} label="Settings" onClick={() => handleNavClick('settings')} active={activeNav === 'settings'} />
                 </nav>

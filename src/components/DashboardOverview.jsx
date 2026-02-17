@@ -7,7 +7,8 @@ import {
     Zap,
     Clock,
     ArrowUpRight,
-    Users
+    Users,
+    History
 } from 'lucide-react';
 
 const DashboardOverview = ({ onNav }) => {
@@ -70,11 +71,11 @@ const DashboardOverview = ({ onNav }) => {
                             onClick={() => onNav('pdf')}
                         />
                         <ToolCard
-                            title="Technical Log"
-                            desc="Tasks, Equipment & Site Summary."
-                            icon={<Zap size={32} />}
-                            color="blue"
-                            onClick={() => onNav('logs')}
+                            title="Daily Log"
+                            desc="Professional site daily reporting."
+                            icon={<History size={32} />}
+                            color="orange"
+                            onClick={() => onNav('daily')}
                         />
                         <ToolCard
                             title="Payroll & Tax"
