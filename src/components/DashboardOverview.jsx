@@ -6,7 +6,8 @@ import {
     TrendingUp,
     Zap,
     Clock,
-    ArrowUpRight
+    ArrowUpRight,
+    Users
 } from 'lucide-react';
 
 const DashboardOverview = ({ onNav }) => {

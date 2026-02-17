@@ -12,7 +12,8 @@ import {
     Moon,
     Sun,
     Menu,
-    X
+    X,
+    Users
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
