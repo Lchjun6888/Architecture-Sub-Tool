@@ -109,31 +109,78 @@ const LandingPage = ({ onStart }) => {
                 <div className="max-w-4xl mx-auto text-center space-y-12">
                     <h2 className="text-4xl font-black dark:text-white">Transparent Pricing</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="glass p-8 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-6 text-left">
-                            <div>
+                        <div className="glass p-8 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-6 text-left flex flex-col h-full transform hover:scale-[1.02] transition-all">
+                            <div className="flex-1">
                                 <h4 className="text-lg font-bold dark:text-white">Free Plan</h4>
                                 <div className="text-3xl font-black dark:text-white mt-2">$0 <span className="text-sm font-normal text-slate-500">/ forever</span></div>
+                                <p className="text-sm text-slate-500 mt-4 leading-relaxed">Perfect for simple tasks and individual users exploring the platform.</p>
+                                <ul className="space-y-4 mt-8">
+                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+                                        <span>Split up to **500 rows** per file</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+                                        <span>Standard Header persistence (4 rows)</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+                                        <span>Basic Row-based splitting</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-slate-400">
+                                        <CheckCircle size={18} className="text-slate-300 shrink-0 mt-0.5" />
+                                        <span>Local browser processing only</span>
+                                    </li>
+                                </ul>
                             </div>
-                            <ul className="space-y-3">
-                                <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><CheckCircle size={16} className="text-emerald-500" /> Up to 500 rows per file</li>
-                                <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><CheckCircle size={16} className="text-emerald-500" /> Basic naming rules</li>
-                                <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><CheckCircle size={16} className="text-emerald-500" /> Locally processed</li>
-                            </ul>
-                            <button onClick={onStart} className="w-full py-3 border border-blue-500 text-blue-500 font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">Get Started</button>
+                            <button onClick={onStart} className="w-full py-4 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                                Current Plan
+                            </button>
                         </div>
-                        <div className="bg-slate-900 dark:bg-blue-600 p-8 rounded-2xl border-4 border-blue-500 space-y-6 text-left relative overflow-hidden">
-                            <div className="absolute top-4 right-4 bg-white text-blue-600 text-[10px] font-black px-2 py-0.5 rounded shadow-sm">BEST VALUE</div>
-                            <div className="text-white">
-                                <h4 className="text-lg font-bold">Pro Plan</h4>
-                                <div className="text-3xl font-black mt-2">$9 <span className="text-sm font-normal text-blue-200">/ month</span></div>
+
+                        <div className="bg-slate-900 border-4 border-blue-500 p-8 rounded-2xl space-y-6 text-left relative overflow-hidden flex flex-col h-full transform hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20">
+                            <div className="absolute top-0 right-0">
+                                <div className="bg-blue-500 text-white text-[10px] font-black px-8 py-2 rotate-45 translate-x-[25px] translate-y-[-5px] shadow-lg">POPULAR</div>
                             </div>
-                            <ul className="space-y-3">
-                                <li className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle size={16} className="text-emerald-400" /> Unlimited rows</li>
-                                <li className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle size={16} className="text-emerald-400" /> Advanced AI naming</li>
-                                <li className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle size={16} className="text-emerald-400" /> Multi-file batching</li>
-                                <li className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle size={16} className="text-emerald-400" /> Priority Support</li>
-                            </ul>
-                            <button className="w-full py-3 bg-white text-blue-600 font-black rounded-lg hover:bg-blue-50 transition-all shadow-xl">Upgrade Now</button>
+
+                            <div className="flex-1">
+                                <div className="text-white">
+                                    <h4 className="text-lg font-bold flex items-center gap-2">
+                                        Pro Plan <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                                    </h4>
+                                    <div className="text-4xl font-black mt-2">$19 <span className="text-sm font-normal text-blue-300">/ month</span></div>
+                                    <p className="text-sm text-slate-400 mt-4 leading-relaxed">For architects, engineers, and data professionals who need efficiency.</p>
+                                </div>
+                                <ul className="space-y-4 mt-8">
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
+                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <span>**Unlimited** rows & sheets processing</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
+                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <span>**Smart Logic**: Keyword-based splitting (Total/Subtotal)</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
+                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <span>**Real-time Full Editing**: Edit directly in preview</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
+                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <span>**Custom Naming**: Use cell data for filenames</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
+                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <span>Multi-page **PDF Comparison** Tool</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-sm text-emerald-400 font-bold">
+                                        <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>24/7 Priority VIP Support</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group">
+                                Upgrade to Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
                         </div>
                     </div>
                 </div>
