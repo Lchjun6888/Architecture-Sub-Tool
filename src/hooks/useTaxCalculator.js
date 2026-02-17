@@ -17,7 +17,7 @@ export const useTaxCalculator = () => {
                 detail = '원천징수 3.3% (국세 3%, 지방세 0.3%)';
                 break;
 
-            case 'UK':
+            case 'UK': {
                 // 영국: CIS (Construction Industry Scheme)
                 // 등록자 20%, 미등록자 30%
                 const rate = options.isRegistered ? 0.20 : 0.30;
@@ -25,6 +25,7 @@ export const useTaxCalculator = () => {
                 net = numAmount - tax;
                 detail = `UK CIS ${rate * 100}% Applied`;
                 break;
+            }
 
             case 'US':
                 // 미국: 단순 10% 예납 (설정 가능)

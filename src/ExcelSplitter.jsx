@@ -12,8 +12,8 @@ const ExcelSplitter = () => {
         keywords, setKeywords,
         headerRows, setHeaderRows,
         isProcessing, progress,
-        isFinished, setIsFinished,
-        files, setFiles,
+        isFinished,
+        files,
         previewData,
         namingFormat, setNamingFormat,
         namingInputRef,
@@ -92,6 +92,7 @@ const ExcelSplitter = () => {
                             progress={progress}
                             isFinished={isFinished}
                             onExport={handleExport}
+                            onAddTag={handleAddTag}
                             filesCount={files.length}
                             namingFormat={namingFormat}
                             setNamingFormat={setNamingFormat}

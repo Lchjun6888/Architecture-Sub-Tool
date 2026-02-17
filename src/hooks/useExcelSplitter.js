@@ -248,7 +248,7 @@ export const useExcelSplitter = () => {
                             if (sourceCell.style) {
                                 try {
                                     targetCell.style = JSON.parse(JSON.stringify(sourceCell.style));
-                                } catch (e) {
+                                } catch {
                                     // Fallback if styling fails
                                 }
                             }

@@ -1,27 +1,32 @@
 import React, { useState, useRef, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
-import { Upload, Layers, ZoomIn, ZoomOut, Download, RotateCw, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    Upload, Layers, ZoomIn, ZoomOut, Download, RotateCw,
+    FileDown, ChevronLeft, ChevronRight, Eye, Split,
+    Maximize2, FileText, CheckCircle2, AlertCircle, RefreshCw
+} from 'lucide-react';
 
 // Set worker source for PDF.js - Using .min.mjs for version 5+ compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const PDFComparer = () => {
+    // --- State ---
     const [fileBefore, setFileBefore] = useState(null);
     const [fileAfter, setFileAfter] = useState(null);
     const [isComparing, setIsComparing] = useState(false);
     const [scale, setScale] = useState(1.5);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
-    const [progress, setProgress] = useState(0); // 0~100
+    const [progress, setProgress] = useState(0);
     const [progressText, setProgressText] = useState('');
-    // All-page results: array of { pageNum, diffDataUrl, beforeDataUrl, afterDataUrl, width, height, hasDiff }
     const [diffResults, setDiffResults] = useState([]);
-    const [viewPage, setViewPage] = useState(0); // index into diffResults for detail view
-    const [compareMode, setCompareMode] = useState('diff'); // 'diff' | 'side'
+    const [viewPage, setViewPage] = useState(0);
+    const [compareMode, setCompareMode] = useState('diff'); // 'diff' (3-panel) | 'overlay' (Single result)
 
     const pdfBeforeRef = useRef(null);
     const pdfAfterRef = useRef(null);
 
+    // --- Handlers ---
     const handleFileChange = (e, type) => {
         const file = e.target.files[0];
         if (file) {
@@ -37,7 +42,14 @@ const PDFComparer = () => {
         }
     };
 
-    // Render a single page of a PDF to an offscreen canvas, return ImageData
+    const handleScaleChange = (newVal) => {
+        const s = Math.max(0.5, Math.min(3, parseFloat(newVal)));
+        setScale(s);
+        // We don't clear results immediately to allow previewing, 
+        // but user will need to re-run "Compare All" if they want updated high-res diffs.
+    };
+
+    // --- PDF Logic ---
     const renderPage = async (pdf, pageNum, scaleVal) => {
         const page = await pdf.getPage(pageNum);
         const viewport = page.getViewport({ scale: scaleVal });
@@ -54,9 +66,6 @@ const PDFComparer = () => {
         };
     };
 
-    // Perform pixel diff between two ImageData objects, return { diffCanvas, hasDiff }
-    // 3-pass approach: only pixels inside real-change clusters get colored markings.
-    // If no colored marking appears → Identical. If markings appear → Changes Detected.
     const performDiff = useCallback((beforeData, afterData, off) => {
         const width = beforeData.width;
         const height = beforeData.height;
@@ -73,7 +82,7 @@ const PDFComparer = () => {
         const d2w = afterData.width;
         const d2h = afterData.height;
 
-        // Pass 1: Build diff mask only (no rendering yet)
+        // Pass 1: Build diff mask (lenient threshold)
         const diffMask = new Uint8Array(width * height);
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
@@ -87,17 +96,18 @@ const PDFComparer = () => {
                 }
                 const r1 = data1[i], g1 = data1[i + 1], b1 = data1[i + 2];
                 const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
-                if (diff > 30) {
+
+                if (diff > 45) { // Lenient threshold
                     diffMask[y * width + x] = 1;
                 }
             }
         }
 
-        // Pass 2: Block analysis — mark which 4x4 blocks contain real changes (not noise)
-        const BLOCK = 4;
+        // Pass 2: Block analysis (more visual breathing room)
+        const BLOCK = 6;
         const bCols = Math.ceil(width / BLOCK);
         const bRows = Math.ceil(height / BLOCK);
-        const realBlock = new Uint8Array(bCols * bRows); // 1 = real change block
+        const realBlock = new Uint8Array(bCols * bRows);
         let realDiffBlocks = 0;
         for (let by = 0; by < bRows; by++) {
             for (let bx = 0; bx < bCols; bx++) {
@@ -110,472 +120,473 @@ const PDFComparer = () => {
                         if (diffMask[(yStart + dy) * width + (xStart + dx)]) blockCount++;
                     }
                 }
-                if (blockCount >= 3) {
+                if (blockCount >= 5) { // Clusters required
                     realBlock[by * bCols + bx] = 1;
                     realDiffBlocks++;
                 }
             }
         }
 
-        // Pass 3: Render — only color diff pixels that belong to real-change blocks
+        // Pass 3: Render
         let visibleDiffCount = 0;
+        const out = diffImg.data;
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
-                const r1 = data1[i], g1 = data1[i + 1], b1 = data1[i + 2];
-                const bx = Math.floor(x / BLOCK);
-                const by = Math.floor(y / BLOCK);
-                const isRealBlock = realBlock[by * bCols + bx];
+                const bx = Math.floor(x / BLOCK), by = Math.floor(y / BLOCK);
+                const isReal = realBlock[by * bCols + bx];
 
-                if (diffMask[y * width + x] && isRealBlock) {
-                    // This pixel is in a real-change cluster → show colored marking
-                    visibleDiffCount++;
-                    const x2 = x + offX;
-                    const y2 = y + offY;
-                    let r2 = 255, g2 = 255, b2 = 255;
-                    if (x2 >= 0 && x2 < d2w && y2 >= 0 && y2 < d2h) {
-                        const i2 = (y2 * d2w + x2) * 4;
-                        r2 = data2[i2]; g2 = data2[i2 + 1]; b2 = data2[i2 + 2];
-                    }
-                    const isInkBefore = (r1 + g1 + b1) < 700;
-                    const isInkAfter = (r2 + g2 + b2) < 700;
-                    if (isInkBefore && !isInkAfter) {
-                        // Removed in After → Red
-                        diffImg.data[i] = 239; diffImg.data[i + 1] = 68; diffImg.data[i + 2] = 68; diffImg.data[i + 3] = 255;
-                    } else if (!isInkBefore && isInkAfter) {
-                        // Added in After → Blue
-                        diffImg.data[i] = 59; diffImg.data[i + 1] = 130; diffImg.data[i + 2] = 246; diffImg.data[i + 3] = 255;
+                const r1 = data1[i], g1 = data1[i + 1], b1 = data1[i + 2];
+                const x2 = x + offX;
+                const y2 = y + offY;
+                let r2 = 255, g2 = 255, b2 = 255;
+                if (x2 >= 0 && x2 < d2w && y2 >= 0 && y2 < d2h) {
+                    const i2 = (y2 * d2w + x2) * 4;
+                    r2 = data2[i2]; g2 = data2[i2 + 1]; b2 = data2[i2 + 2];
+                }
+
+                const avg1 = (r1 + g1 + b1) / 3;
+                const avg2 = (r2 + g2 + b2) / 3;
+                const base = 245 + (avg1 + avg2) / 20; // Very light background
+
+                if (isReal && diffMask[y * width + x]) {
+                    // Difference detected
+                    if (r1 < r2 - 20 || g1 < g2 - 20 || b1 < b2 - 20) {
+                        // Added (Blue)
+                        out[i] = 37; out[i + 1] = 99; out[i + 2] = 235; out[i + 3] = 255;
                     } else {
-                        // Changed → Gray
-                        diffImg.data[i] = 160; diffImg.data[i + 1] = 160; diffImg.data[i + 2] = 160; diffImg.data[i + 3] = 255;
+                        // Removed (Red)
+                        out[i] = 220; out[i + 1] = 38; out[i + 2] = 38; out[i + 3] = 255;
                     }
+                    visibleDiffCount++;
                 } else {
-                    // Clean background (no marking)
-                    const avg = (r1 + g1 + b1) / 3;
-                    const brightness = 235 + (avg / 255) * 20;
-                    diffImg.data[i] = brightness; diffImg.data[i + 1] = brightness; diffImg.data[i + 2] = brightness; diffImg.data[i + 3] = 255;
+                    out[i] = out[i + 1] = out[i + 2] = base;
+                    out[i + 3] = 255;
                 }
             }
         }
 
         ctx.putImageData(diffImg, 0, 0);
-        const totalPixels = width * height;
-        const diffRatio = visibleDiffCount / totalPixels;
-        // hasDiff = true only if there are enough visible colored pixels to actually see
-        // A single character change produces 300+ pixels; line-heavy drawings produce noise up to ~100
-        const hasDiff = realDiffBlocks > 0 && visibleDiffCount >= 200;
-        return { dataUrl: canvas.toDataURL('image/png'), hasDiff, diffPixels: visibleDiffCount, diffPercent: (diffRatio * 100).toFixed(2), realDiffBlocks, width, height };
+        const hasDiff = realDiffBlocks > 0 && visibleDiffCount >= 300;
+        return {
+            diffDataUrl: canvas.toDataURL('image/png'),
+            hasDiff,
+            diffPixels: visibleDiffCount,
+            diffPercent: ((visibleDiffCount / (width * height)) * 100).toFixed(2),
+            width, height
+        };
     }, []);
 
-    // Main: compare ALL pages
     const runAllPagesComparison = async () => {
-        if (!fileBefore || !fileAfter) return;
         setIsComparing(true);
-        setDiffResults([]);
         setProgress(0);
-        setProgressText('Loading PDFs...');
+        setProgressText('Initializing PDFs...');
 
         try {
-            // Load both PDFs
-            const [abBefore, abAfter] = await Promise.all([fileBefore.arrayBuffer(), fileAfter.arrayBuffer()]);
-            const pdfBefore = await pdfjsLib.getDocument({ data: abBefore, disableRange: true, disableAutoFetch: true }).promise;
-            const pdfAfter = await pdfjsLib.getDocument({ data: abAfter, disableRange: true, disableAutoFetch: true }).promise;
-            pdfBeforeRef.current = pdfBefore;
-            pdfAfterRef.current = pdfAfter;
+            const arrayBufferBefore = await fileBefore.arrayBuffer();
+            const arrayBufferAfter = await fileAfter.arrayBuffer();
 
-            const totalPages = Math.min(pdfBefore.numPages, pdfAfter.numPages);
+            pdfBeforeRef.current = await pdfjsLib.getDocument(arrayBufferBefore).promise;
+            pdfAfterRef.current = await pdfjsLib.getDocument(arrayBufferAfter).promise;
+
+            const numPages = Math.min(pdfBeforeRef.current.numPages, pdfAfterRef.current.numPages);
             const results = [];
 
-            for (let p = 1; p <= totalPages; p++) {
-                setProgressText(`Comparing page ${p} / ${totalPages}...`);
-                setProgress(Math.round(((p - 1) / totalPages) * 100));
+            for (let i = 1; i <= numPages; i++) {
+                setProgressText(`Processing Page ${i} of ${numPages}...`);
+                const beforePage = await renderPage(pdfBeforeRef.current, i, scale);
+                const afterPage = await renderPage(pdfAfterRef.current, i, scale);
 
-                const [before, after] = await Promise.all([
-                    renderPage(pdfBefore, p, scale),
-                    renderPage(pdfAfter, p, scale),
-                ]);
-
-                const diffResult = performDiff(before.imageData, after.imageData, offset);
+                const diffResult = performDiff(beforePage.imageData, afterPage.imageData, offset);
 
                 results.push({
-                    pageNum: p,
-                    // If identical (below noise threshold), show clean original instead of noisy diff
-                    diffDataUrl: diffResult.hasDiff ? diffResult.dataUrl : before.dataUrl,
-                    beforeDataUrl: before.dataUrl,
-                    afterDataUrl: after.dataUrl,
-                    width: diffResult.width,
-                    height: diffResult.height,
-                    hasDiff: diffResult.hasDiff,
-                    diffPixels: diffResult.diffPixels,
-                    diffPercent: diffResult.diffPercent,
+                    pageNum: i,
+                    beforeDataUrl: beforePage.dataUrl,
+                    afterDataUrl: afterPage.dataUrl,
+                    ...diffResult
                 });
+
+                setProgress(Math.round((i / numPages) * 100));
             }
 
             setDiffResults(results);
-            setProgress(100);
-            setProgressText(`Done! ${totalPages} page(s) compared.`);
-        } catch (error) {
-            console.error("PDF Processing Error:", error);
-            alert(`Error: ${error.message || "Failed to process PDFs"}. Please check if files are valid.`);
+            setViewPage(0);
+            setProgressText('Comparison Complete!');
+        } catch (err) {
+            console.error(err);
+            setProgressText('Error comparing PDFs.');
         } finally {
             setIsComparing(false);
         }
     };
 
-    // Download single diff image
     const downloadSingleDiff = (result) => {
-        const a = document.createElement('a');
-        a.href = result.diffDataUrl;
-        a.download = `diff_page_${result.pageNum}.png`;
-        a.click();
+        const link = document.createElement('a');
+        link.download = `diff_page_${result.pageNum}.png`;
+        link.href = result.diffDataUrl;
+        link.click();
     };
 
-    // Download ALL diff images as ZIP
     const downloadAllAsZip = async () => {
-        if (diffResults.length === 0) return;
-        setProgressText('Creating ZIP...');
         const zip = new JSZip();
-        const folder = zip.folder('pdf_diff_results');
-
-        for (const result of diffResults) {
-            // Convert data URL to blob
-            const response = await fetch(result.diffDataUrl);
-            const blob = await response.blob();
-            folder.file(`diff_page_${result.pageNum}.png`, blob);
-        }
-
-        const content = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(content);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pdf_comparison_results.zip';
-        a.click();
-        URL.revokeObjectURL(url);
-        setProgressText(`Done! ${diffResults.length} page(s) compared.`);
+        diffResults.forEach(r => {
+            const data = r.diffDataUrl.split(',')[1];
+            zip.file(`Page_${r.pageNum}_diff.png`, data, { base64: true });
+        });
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.download = 'Revision_Diffs.zip';
+        link.href = URL.createObjectURL(blob);
+        link.click();
     };
 
-    const handleScaleChange = (val) => {
-        const n = parseFloat(val);
-        if (!isNaN(n) && n > 0.05 && n < 10) {
-            setScale(n);
-        }
-    };
-
+    // --- Render Helpers ---
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-6 pb-20 animate-in fade-in duration-500">
+            {/* Header / Controls */}
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-8">
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white">Drawing Compare</h2>
-                    <p className="text-slate-500 font-medium text-sm">Analyze visual revisions between two PDF blueprints — all pages at once</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                        <Layers className="text-blue-500" /> Drawing Compare
+                    </h2>
+                    <p className="text-slate-500 font-medium text-sm mt-1">Multi-page professional blueprint revision analysis</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    {/* Scale */}
-                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <span className="text-[10px] font-black text-slate-400 uppercase">Zoom</span>
-                        <button onClick={() => handleScaleChange(scale - 0.1)} className="p-1 hover:text-blue-500 transition-colors"><ZoomOut size={14} /></button>
-                        <input
-                            type="number"
-                            step="0.1"
-                            style={{ width: '50px' }}
-                            value={scale}
-                            onChange={(e) => handleScaleChange(e.target.value)}
-                            className="bg-transparent text-sm font-bold outline-none text-center"
-                        />
-                        <button onClick={() => handleScaleChange(scale + 0.1)} className="p-1 hover:text-blue-500 transition-colors"><ZoomIn size={14} /></button>
+                <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    {/* Zoom / Scale Controls */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Zoom</span>
+                        <div className="flex items-center gap-1">
+                            <button onClick={() => handleScaleChange(scale - 0.2)} className="p-1 hover:text-blue-500 transition-colors"><ZoomOut size={14} /></button>
+                            <span className="text-xs font-black min-w-[35px] text-center">{(scale * 100).toFixed(0)}%</span>
+                            <button onClick={() => handleScaleChange(scale + 0.2)} className="p-1 hover:text-blue-500 transition-colors"><ZoomIn size={14} /></button>
+                        </div>
                     </div>
 
                     {/* Offset Controls */}
-                    <div className="flex items-center gap-4 px-4 py-1 border-l border-slate-100 dark:border-slate-800">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Offset X: {offset.x}px</span>
+                    <div className="flex items-center gap-4 px-4 py-1.5 border-l border-slate-100 dark:border-slate-800">
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[9px] font-black text-slate-400 uppercase leading-none">Offset X: {offset.x}px</span>
                             <input
-                                type="range" min="-50" max="50" value={offset.x}
+                                type="range" min="-30" max="30" value={offset.x}
                                 onChange={(e) => setOffset(prev => ({ ...prev, x: parseInt(e.target.value) }))}
-                                className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                             />
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Offset Y: {offset.y}px</span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[9px] font-black text-slate-400 uppercase leading-none">Offset Y: {offset.y}px</span>
                             <input
-                                type="range" min="-50" max="50" value={offset.y}
+                                type="range" min="-30" max="30" value={offset.y}
                                 onChange={(e) => setOffset(prev => ({ ...prev, y: parseInt(e.target.value) }))}
-                                className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                             />
                         </div>
                         <button
                             onClick={() => setOffset({ x: 0, y: 0 })}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                             title="Reset Offset"
                         >
-                            <RotateCw size={16} />
+                            <RotateCw size={14} />
                         </button>
                     </div>
 
                     <button
                         onClick={runAllPagesComparison}
                         disabled={!fileBefore || !fileAfter || isComparing}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-500/30 hover:bg-blue-600 disabled:opacity-50 transition-all ml-2"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-50 transition-all ml-1"
                     >
-                        {isComparing ? "Processing..." : <><Layers size={18} /> Compare All Pages</>}
+                        {isComparing ? <><RefreshCw className="animate-spin" size={16} /> Comparing...</> : <><Layers size={18} /> Compare All Pages</>}
                     </button>
 
                     {diffResults.length > 0 && (
                         <button
                             onClick={downloadAllAsZip}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all"
                         >
-                            <FileDown size={18} /> Download ZIP
+                            <FileDown size={18} /> ZIP All
                         </button>
                     )}
                 </div>
             </header>
 
-            {/* File Upload Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Before Upload */}
-                <div className="glass p-6 rounded-2xl border-slate-200 dark:border-slate-800">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Before (Original)</h3>
-                    {!fileBefore ? (
-                        <div className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center relative hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                            <input type="file" accept=".pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileChange(e, 'before')} />
-                            <Upload className="mx-auto text-slate-300 mb-2" size={32} />
-                            <p className="text-sm font-bold text-slate-500">Upload Original Plan</p>
+            {/* File Upload Area (Only if no results) */}
+            {diffResults.length === 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="glass p-8 rounded-[32px] border-slate-200 dark:border-slate-800 flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600 mb-4">
+                            <FileText size={24} />
                         </div>
-                    ) : (
-                        <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-500 text-white rounded flex items-center justify-center font-bold text-xs">PDF</div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold truncate max-w-[250px]">{fileBefore.name}</span>
-                                    {pdfBeforeRef.current && <span className="text-[10px] text-slate-400">{pdfBeforeRef.current.numPages} pages</span>}
-                                </div>
-                            </div>
-                            <button onClick={() => { setFileBefore(null); pdfBeforeRef.current = null; setDiffResults([]); }} className="text-slate-400 hover:text-red-500 text-xl">×</button>
-                        </div>
-                    )}
-                </div>
+                        <h3 className="text-lg font-black dark:text-white mb-2 underline decoration-red-500/30 underline-offset-4">1. Original Plan (Before)</h3>
+                        <p className="text-slate-500 text-sm text-center mb-6">Select the reference document for comparison.</p>
 
-                {/* After Upload */}
-                <div className="glass p-6 rounded-2xl border-slate-200 dark:border-slate-800">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">After (Modified)</h3>
-                    {!fileAfter ? (
-                        <div className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center relative hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                            <input type="file" accept=".pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileChange(e, 'after')} />
-                            <Upload className="mx-auto text-slate-300 mb-2" size={32} />
-                            <p className="text-sm font-bold text-slate-500">Upload Modified Plan</p>
-                        </div>
-                    ) : (
-                        <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-500 text-white rounded flex items-center justify-center font-bold text-xs">PDF</div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold truncate max-w-[250px]">{fileAfter.name}</span>
-                                    {pdfAfterRef.current && <span className="text-[10px] text-slate-400">{pdfAfterRef.current.numPages} pages</span>}
-                                </div>
+                        {!fileBefore ? (
+                            <div className="w-full h-40 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex flex-col items-center justify-center relative group hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
+                                <input type="file" accept=".pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileChange(e, 'before')} />
+                                <Upload className="text-slate-300 group-hover:text-blue-500 transition-colors mb-2" size={32} />
+                                <span className="text-sm font-bold text-slate-400">Click to upload PDF</span>
                             </div>
-                            <button onClick={() => { setFileAfter(null); pdfAfterRef.current = null; setDiffResults([]); }} className="text-slate-400 hover:text-red-500 text-xl">×</button>
+                        ) : (
+                            <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 flex items-center justify-between border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-red-500 text-white rounded-lg flex items-center justify-center font-black text-xs">PDF</div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-sm font-black dark:text-white truncate max-w-[180px]">{fileBefore.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold">READY TO COMPARE</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setFileBefore(null)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">×</button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="glass p-8 rounded-[32px] border-slate-200 dark:border-slate-800 flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 mb-4">
+                            <Layers size={24} />
                         </div>
-                    )}
+                        <h3 className="text-lg font-black dark:text-white mb-2 underline decoration-blue-500/30 underline-offset-4">2. Modified Plan (After)</h3>
+                        <p className="text-slate-500 text-sm text-center mb-6">Select the revised version of the document.</p>
+
+                        {!fileAfter ? (
+                            <div className="w-full h-40 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex flex-col items-center justify-center relative group hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
+                                <input type="file" accept=".pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileChange(e, 'after')} />
+                                <Upload className="text-slate-300 group-hover:text-blue-500 transition-colors mb-2" size={32} />
+                                <span className="text-sm font-bold text-slate-400">Click to upload PDF</span>
+                            </div>
+                        ) : (
+                            <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 flex items-center justify-between border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center font-black text-xs">PDF</div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-sm font-black dark:text-white truncate max-w-[180px]">{fileAfter.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold">READY TO COMPARE</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setFileAfter(null)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">×</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Progress Bar */}
             {isComparing && (
-                <div className="glass p-4 rounded-2xl border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{progressText}</span>
-                        <span className="text-sm font-black text-blue-500">{progress}%</span>
+                <div className="glass p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden relative">
+                    <div className="absolute top-0 left-0 h-1 bg-blue-500/20 w-full" />
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                            <RefreshCw className="text-blue-500 animate-spin" size={20} />
+                            <span className="text-sm font-black text-slate-700 dark:text-slate-200">{progressText}</span>
+                        </div>
+                        <span className="text-lg font-black text-blue-500">{progress}%</span>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
                         <div
-                            className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2.5 rounded-full transition-all duration-300"
+                            className="bg-gradient-to-r from-blue-600 via-blue-400 to-cyan-400 h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
                 </div>
             )}
 
-            {/* Results Grid — Thumbnail Gallery */}
+            {/* Comparison Results Area */}
             {diffResults.length > 0 && (
-                <div className="space-y-6">
-                    {/* Summary */}
-                    <div className="glass p-4 rounded-2xl border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
-                                {diffResults.length} page(s) compared
-                            </span>
-                            <span className="text-xs px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full font-bold">
-                                {diffResults.filter(r => r.hasDiff).length} with changes
-                            </span>
-                            <span className="text-xs px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-bold">
-                                {diffResults.filter(r => !r.hasDiff).length} identical
-                            </span>
+                <div className="flex flex-col gap-6">
+                    {/* Results Overview Bar */}
+                    <div className="glass p-4 rounded-[24px] border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                        <div className="flex items-center gap-6">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compared</span>
+                                <span className="text-lg font-black dark:text-white leading-none">{diffResults.length} Pages</span>
+                            </div>
+                            <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revisions Found</span>
+                                <span className={`text-lg font-black leading-none ${diffResults.some(r => r.hasDiff) ? 'text-red-500' : 'text-emerald-500'}`}>
+                                    {diffResults.filter(r => r.hasDiff).length} Items
+                                </span>
+                            </div>
                         </div>
-
-                        {/* Legend */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-[10px] font-bold text-slate-500">Removed</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                <span className="text-[10px] font-bold text-slate-500">Added</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 bg-slate-300 rounded-full"></div>
-                                <span className="text-[10px] font-bold text-slate-500">Unchanged</span>
-                            </div>
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 bg-red-500 rounded-md shadow-sm shadow-red-500/30"></div><span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Deletions</span></div>
+                            <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 bg-blue-500 rounded-md shadow-sm shadow-blue-500/30"></div><span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Additions</span></div>
                         </div>
                     </div>
 
-                    {/* Thumbnail Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {diffResults.map((result, idx) => (
-                            <div
-                                key={result.pageNum}
-                                className={`group relative glass rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${result.hasDiff
-                                    ? 'border-red-300 dark:border-red-700'
-                                    : 'border-green-300 dark:border-green-700'
-                                    } ${viewPage === idx ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
-                                onClick={() => setViewPage(idx)}
-                            >
-                                <img
-                                    src={result.diffDataUrl}
-                                    alt={`Page ${result.pageNum} diff`}
-                                    className="w-full h-auto bg-white"
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-white text-xs font-black">Page {result.pageNum}</span>
-                                        {result.hasDiff ? (
-                                            <span className="text-[9px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold">CHANGED</span>
+                    <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+                        {/* LEFT: Thumbnail Sidebar */}
+                        <aside className="w-full lg:w-72 flex-shrink-0">
+                            <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col h-[75vh] shadow-lg sticky top-28">
+                                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                    <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Document Pages</h3>
+                                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{diffResults.length}</span>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                                    {diffResults.map((result, idx) => (
+                                        <button
+                                            key={result.pageNum}
+                                            className={`
+                                                w-full group relative glass rounded-2xl border-2 overflow-hidden cursor-pointer transition-all duration-300
+                                                ${viewPage === idx
+                                                    ? 'border-blue-500 ring-4 ring-blue-500/10 scale-[0.98]'
+                                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+                                                }
+                                            `}
+                                            onClick={() => setViewPage(idx)}
+                                        >
+                                            <div className="relative aspect-[3/4] bg-white group-hover:opacity-90 transition-opacity">
+                                                <img src={result.diffDataUrl} alt="" className="w-full h-full object-contain p-2" />
+                                                <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] text-white font-black shadow-lg">
+                                                    P. {result.pageNum}
+                                                </div>
+                                                {result.hasDiff && (
+                                                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-500/10 text-red-600 px-1.5 py-0.5 rounded-md text-[8px] font-black border border-red-200 animate-pulse">
+                                                        DIFF detected
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </aside>
+
+                        {/* CENTER: Main Multi-Panel View */}
+                        <div className="flex-1 min-w-0">
+                            {diffResults[viewPage] && (
+                                <div className="glass rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden h-[75vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:bg-slate-900/50">
+                                    {/* Sub-Header / Toggles */}
+                                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-8 py-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 z-10">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-black text-lg">
+                                                {diffResults[viewPage].pageNum}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <h4 className="text-xl font-black text-slate-800 dark:text-white leading-none mb-1 flex items-center gap-2">
+                                                    Revision Analysis
+                                                    {diffResults[viewPage].hasDiff ? <AlertCircle size={16} className="text-red-500" /> : <CheckCircle2 size={16} className="text-emerald-500" />}
+                                                </h4>
+                                                <span className={`text-xs font-bold uppercase tracking-widest ${diffResults[viewPage].hasDiff ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                    {diffResults[viewPage].hasDiff ? `${diffResults[viewPage].diffPercent}% change detected in this page` : 'Perfect Match (No changes)'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[18px]">
+                                                <button
+                                                    onClick={() => setCompareMode('diff')}
+                                                    className={`
+                                                        flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black transition-all duration-300
+                                                        ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-[1.05]' : 'text-slate-500 hover:text-slate-700'}
+                                                    `}
+                                                >
+                                                    <Split size={14} /> 3-PANEL VIEW
+                                                </button>
+                                                <button
+                                                    onClick={() => setCompareMode('overlay')}
+                                                    className={`
+                                                        flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black transition-all duration-300
+                                                        ${compareMode === 'overlay' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-[1.05]' : 'text-slate-500 hover:text-slate-700'}
+                                                    `}
+                                                >
+                                                    <Maximize2 size={14} /> OVERLAY ONLY
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={() => downloadSingleDiff(diffResults[viewPage])}
+                                                className="w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                                title="Download this page"
+                                            >
+                                                <Download size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Interactive Scroll Area */}
+                                    <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-4 lg:p-6">
+                                        {compareMode === 'diff' ? (
+                                            /* THE 3-PANEL CENTERED VIEW */
+                                            <div className="flex gap-6 min-h-full items-start justify-center min-w-[1200px]">
+                                                {/* Left Panel: Original */}
+                                                <div className="flex-1 max-w-[400px] flex flex-col gap-3 group">
+                                                    <div className="flex items-center gap-2 px-2">
+                                                        <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">01. Original Before</span>
+                                                    </div>
+                                                    <div className="relative rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl group-hover:shadow-2xl transition-all duration-500">
+                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="Original" className="w-full h-auto" />
+                                                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Center Panel: THE DIFF (Visual Result) */}
+                                                <div className="flex-[1.5] max-w-[600px] flex flex-col gap-3 group">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className="h-[2px] w-8 bg-blue-500/20 rounded-full" />
+                                                        <span className="text-[11px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em]">ANALYSIS PREVIEW</span>
+                                                        <div className="h-[2px] w-8 bg-blue-500/20 rounded-full" />
+                                                    </div>
+                                                    <div className="relative rounded-[32px] overflow-hidden border-4 border-white dark:border-slate-800 bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] group-hover:scale-[1.01] transition-all duration-500">
+                                                        <img src={diffResults[viewPage].diffDataUrl} alt="Diff Overlay" className="w-full h-auto" />
+                                                        <div className="absolute top-4 right-4 text-[10px] font-black bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-lg">CENTER RESULT</div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Panel: Revised */}
+                                                <div className="flex-1 max-w-[400px] flex flex-col gap-3 group">
+                                                    <div className="flex items-center justify-end gap-2 px-2 text-right">
+                                                        <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">02. Revised After</span>
+                                                    </div>
+                                                    <div className="relative rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl group-hover:shadow-2xl transition-all duration-500">
+                                                        <img src={diffResults[viewPage].afterDataUrl} alt="Revised" className="w-full h-auto" />
+                                                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <span className="text-[9px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold">SAME</span>
+                                            /* SINGLE OVERLAY VIEW */
+                                            <div className="flex justify-center min-h-full items-center p-4">
+                                                <div className="relative max-w-4xl w-full group">
+                                                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-[40px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                                                    <img
+                                                        src={diffResults[viewPage].diffDataUrl}
+                                                        alt="Large Comparison Overlay"
+                                                        className="relative w-full h-auto shadow-2xl bg-white border border-slate-200 dark:border-slate-800 rounded-3xl"
+                                                    />
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                {/* Download button on hover */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); downloadSingleDiff(result); }}
-                                    className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-slate-800/90 rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-500 hover:text-white"
-                                    title={`Download Page ${result.pageNum}`}
-                                >
-                                    <Download size={14} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Detail View — Enlarged selected page */}
-                    {diffResults[viewPage] && (
-                        <div className="glass rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                            <div className="bg-slate-50 dark:bg-slate-900 px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                                        <button
-                                            disabled={viewPage <= 0}
-                                            onClick={() => setViewPage(p => p - 1)}
-                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-colors"
-                                        >
-                                            <ChevronLeft size={16} />
-                                        </button>
-                                        <span className="text-xs font-black min-w-[80px] text-center">
-                                            Page {diffResults[viewPage].pageNum} / {diffResults.length}
-                                        </span>
-                                        <button
-                                            disabled={viewPage >= diffResults.length - 1}
-                                            onClick={() => setViewPage(p => p + 1)}
-                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-colors"
-                                        >
-                                            <ChevronRight size={16} />
-                                        </button>
-                                    </div>
-                                    <div className="hidden xs:flex flex-col gap-0.5">
-                                        <span className="text-[10px] font-black text-slate-400 p-0 leading-none">DIFF SCORE</span>
-                                        <span className={`text-xs font-black p-0 leading-none ${diffResults[viewPage].hasDiff ? 'text-red-500' : 'text-green-500'}`}>
-                                            {diffResults[viewPage].diffPercent}% ({diffResults[viewPage].diffPixels.toLocaleString()}px)
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
-                                        <button
-                                            onClick={() => setCompareMode('diff')}
-                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-500 shadow-sm' : 'text-slate-500'}`}
-                                        >
-                                            DIFF OVERLAY
-                                        </button>
-                                        <button
-                                            onClick={() => setCompareMode('side')}
-                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${compareMode === 'side' ? 'bg-white dark:bg-slate-700 text-blue-500 shadow-sm' : 'text-slate-500'}`}
-                                        >
-                                            SIDE-BY-SIDE
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={() => downloadSingleDiff(diffResults[viewPage])}
-                                        className="p-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
-                                        title="Download this page"
-                                    >
-                                        <Download size={18} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="overflow-auto bg-slate-100 dark:bg-slate-950 p-4 lg:p-8 custom-scrollbar" style={{ maxHeight: '75vh', minHeight: '400px' }}>
-                                {compareMode === 'diff' ? (
-                                    <div className="flex justify-center flex-col items-center gap-4">
-                                        <img
-                                            src={diffResults[viewPage].diffDataUrl}
-                                            alt={`Page ${diffResults[viewPage].pageNum} detail`}
-                                            className="shadow-2xl bg-white border border-slate-200 dark:border-slate-800 transition-all duration-300"
-                                            style={{ width: '100%', maxWidth: '1200px' }}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-2">
-                                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Original (Before)</span>
-                                                <span className="text-[10px] font-bold text-slate-300">Scale: {scale}x</span>
-                                            </div>
-                                            <img
-                                                src={diffResults[viewPage].beforeDataUrl}
-                                                alt="Before"
-                                                className="w-full shadow-xl bg-white border border-slate-200 dark:border-slate-800 rounded-lg transition-transform hover:scale-[1.01]"
-                                            />
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-2">
-                                                <span className="text-xs font-black text-blue-500 uppercase tracking-widest">Revised (After)</span>
-                                                <span className="text-[10px] font-bold text-slate-300">Offset: {offset.x},{offset.y}</span>
-                                            </div>
-                                            <img
-                                                src={diffResults[viewPage].afterDataUrl}
-                                                alt="After"
-                                                className="w-full shadow-xl bg-white border border-slate-200 dark:border-slate-800 rounded-lg transition-transform hover:scale-[1.01]"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            )}
-
-            {/* Empty state */}
-            {!isComparing && diffResults.length === 0 && (
-                <div className="glass rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 min-h-[300px] flex items-center justify-center">
-                    <div className="text-slate-400 italic flex flex-col items-center gap-4">
-                        <Layers size={48} className="opacity-20" />
-                        <span>Upload two PDFs and click <strong>Compare All Pages</strong></span>
                     </div>
                 </div>
             )}
+
+            {/* Empty State */}
+            {!isComparing && diffResults.length === 0 && (
+                <div className="glass rounded-[40px] border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 min-h-[400px] flex flex-col items-center justify-center gap-6 p-10 mt-12">
+                    <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 animate-pulse">
+                        <Layers size={80} strokeWidth={1.5} />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <h3 className="text-2xl font-black text-slate-700 dark:text-slate-300">Ready for Document Comparison</h3>
+                        <p className="text-slate-500 font-medium max-w-md mx-auto">Upload two versions of the same blueprint to visualize all modifications, additions, and deletions across all pages automatically.</p>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs font-black text-slate-400 uppercase tracking-widest mt-4">
+                        <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> Pixel-Perfect Accuracy</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                        <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> All-Page Processing</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                        <span className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-500" /> Vector Analysis</span>
+                    </div>
+                </div>
+            )}
+
+            {/* SEO Footnote - Visually subtle */}
+            <footer className="pt-20 text-center">
+                <p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.5em]">Architecture Assistant PDF Engine v5.0 PRO</p>
+            </footer>
         </div>
     );
 };
