@@ -22,6 +22,7 @@ const PDFComparer = () => {
     const [diffResults, setDiffResults] = useState([]);
     const [viewPage, setViewPage] = useState(0);
     const [compareMode, setCompareMode] = useState('overlay'); // 'diff' | 'overlay'
+    const [uiZoom, setUiZoom] = useState(1);
 
     const pdfBeforeRef = useRef(null);
     const pdfAfterRef = useRef(null);
@@ -486,6 +487,34 @@ const PDFComparer = () => {
                                             </div>
 
                                             <div className="flex items-center gap-4">
+                                                {compareMode === 'overlay' && (
+                                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner mr-2">
+                                                        <button
+                                                            onClick={() => setUiZoom(z => Math.max(0.5, z - 0.25))}
+                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors"
+                                                            title="Zoom Out"
+                                                        >
+                                                            <ZoomOut size={16} />
+                                                        </button>
+                                                        <div className="px-2 flex items-center justify-center text-[10px] font-black text-slate-500 min-w-[50px]">
+                                                            {Math.round(uiZoom * 100)}%
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setUiZoom(z => Math.min(5, z + 0.25))}
+                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors"
+                                                            title="Zoom In"
+                                                        >
+                                                            <ZoomIn size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setUiZoom(1)}
+                                                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors border-l border-slate-200 dark:border-slate-700 ml-1"
+                                                            title="Reset Zoom"
+                                                        >
+                                                            <RefreshCw size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[22px] shadow-inner">
                                                     <button
                                                         onClick={() => setCompareMode('overlay')}
@@ -534,13 +563,17 @@ const PDFComparer = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex justify-center h-full items-center">
-                                                    <div className="relative h-full w-full group flex items-center justify-center">
-                                                        <div className="absolute inset-0 bg-blue-500/5 rounded-[40px] blur-3xl opacity-50" />
+                                                <div className="flex justify-center items-center min-h-full min-w-full p-8 transition-all duration-300">
+                                                    <div className="relative inline-block transition-transform duration-200">
                                                         <img
                                                             src={diffResults[viewPage].diffDataUrl}
                                                             alt="Diff"
-                                                            className="relative max-w-full max-h-full object-contain shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-3xl"
+                                                            style={{
+                                                                width: uiZoom === 1 ? 'auto' : `${uiZoom * 100}%`,
+                                                                maxWidth: uiZoom === 1 ? '100%' : 'none',
+                                                                maxHeight: uiZoom === 1 ? '100%' : 'none',
+                                                            }}
+                                                            className="relative shadow-2xl bg-white border border-slate-200 dark:border-slate-800 rounded-3xl object-contain mx-auto"
                                                         />
                                                     </div>
                                                 </div>
