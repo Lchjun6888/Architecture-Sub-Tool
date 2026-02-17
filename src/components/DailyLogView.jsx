@@ -5,7 +5,8 @@ import {
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
     Plus, Trash2, ChevronDown
 } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+// Supabase 연동은 나중에 추가 예정
+// import { supabase } from '../supabaseClient';
 
 // Country config - safety standards, labels
 const COUNTRIES = {
@@ -169,48 +170,35 @@ const DailyLogView = () => {
         }));
     };
 
-    const fetchHistory = async () => {
-        if (!supabase) return;
+    const fetchHistory = () => {
         try {
-            const { data, error } = await supabase
-                .from('daily_logs')
-                .select('*')
-                .order('date', { ascending: false });
-
-            if (data) setHistory(data);
-            if (error && error.code !== 'PGRST116') {
-                console.log('Supabase check:', error.message);
-            }
+            const saved = localStorage.getItem('daily_logs');
+            if (saved) setHistory(JSON.parse(saved));
         } catch (err) {
             console.error(err);
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         setLoading(true);
-        if (!supabase) {
-            alert('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env');
-            setLoading(false);
-            return;
-        }
         try {
-            const { error } = await supabase
-                .from('daily_logs')
-                .insert([{
-                    date: formData.date,
-                    content: formData,
-                    total_days: formData.targets.total_days,
-                    current_day: formData.targets.current_day
-                }]);
+            const newEntry = {
+                id: Date.now(),
+                date: formData.date,
+                content: formData,
+                total_days: formData.targets.total_days,
+                current_day: formData.targets.current_day
+            };
+            const existing = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+            const updated = [newEntry, ...existing];
+            localStorage.setItem('daily_logs', JSON.stringify(updated));
 
-            if (error) throw error;
-
-            alert('Daily Log Saved to Supabase!');
-            fetchHistory();
+            alert('Daily Log Saved!');
+            setHistory(updated);
             setActiveTab('history');
         } catch (err) {
             console.error(err);
-            alert('Error saving to Supabase. Make sure the table "daily_logs" exists.');
+            alert('Error saving log.');
         } finally {
             setLoading(false);
         }
