@@ -146,20 +146,20 @@ const PDFComparer = () => {
                 }
 
                 const grayBase = (r1 + g1 + b1) / 3;
-                const displayGray = 230 + (grayBase / 15); // Keep lines visible but very light
+                const displayGray = 120 + (grayBase * 0.53); // Significant improvement in line visibility (Black becomes #787878)
 
                 if (isReal && diffMask[y * width + x]) {
                     // Difference detected
                     if (r1 < r2 - 20 || g1 < g2 - 20 || b1 < b2 - 20) {
                         // Added (Blue) - Stronger visibility
-                        out[i] = 10; out[i + 1] = 80; out[i + 2] = 255; out[i + 3] = 255;
+                        out[i] = 0; out[i + 1] = 70; out[i + 2] = 255; out[i + 3] = 255;
                     } else {
                         // Removed (Red) - Stronger visibility
-                        out[i] = 255; out[i + 1] = 30; out[i + 2] = 30; out[i + 3] = 255;
+                        out[i] = 255; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = 255;
                     }
                     visibleDiffCount++;
                 } else {
-                    // Clear background lines
+                    // Clear background lines - much more visible now
                     out[i] = out[i + 1] = out[i + 2] = displayGray;
                     out[i + 3] = 255;
                 }
