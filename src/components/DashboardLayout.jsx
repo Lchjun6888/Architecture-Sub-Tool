@@ -6,12 +6,15 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans">
             {/* Sidebar */}
             <aside className="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col p-6 fixed inset-y-0 z-50">
-                <div className="flex items-center gap-3 mb-10 px-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
+                <div
+                    className="flex items-center gap-3 mb-10 px-2 cursor-pointer group"
+                    onClick={onBack}
+                >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                         E
                     </div>
                     <div>
-                        <span className="text-xl font-black tracking-tight dark:text-white block leading-none">ExcelFlow</span>
+                        <span className="text-xl font-black tracking-tight dark:text-white block leading-none group-hover:text-blue-500 transition-colors">ExcelFlow</span>
                         <span className="text-xs text-slate-400 font-medium">SaaS Dashboard</span>
                     </div>
                 </div>

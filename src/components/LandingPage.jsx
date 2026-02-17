@@ -2,18 +2,37 @@ import React from 'react';
 import { Bolt, CheckCircle, Shield, Scissors, ArrowRight, Zap, Star } from 'lucide-react';
 
 const LandingPage = ({ onStart }) => {
+    const scrollToPricing = () => {
+        const element = document.getElementById('pricing-section');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
             {/* Nav */}
             <nav className="fixed top-0 w-full z-50 glass px-6 py-4 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold">
+                <div
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={scrollToTop}
+                >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform">
                         E
                     </div>
-                    <span className="text-xl font-black tracking-tight dark:text-white">ExcelFlow</span>
+                    <span className="text-xl font-black tracking-tight dark:text-white group-hover:text-blue-500 transition-colors">ExcelFlow</span>
                 </div>
                 <div className="flex gap-4">
-                    <button className="text-sm font-semibold text-slate-500 hover:text-blue-500 transition-colors">Pricing</button>
+                    <button
+                        onClick={scrollToPricing}
+                        className="text-sm font-semibold text-slate-500 hover:text-blue-500 transition-colors"
+                    >
+                        Pricing
+                    </button>
                     <button onClick={onStart} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-500/30 active:scale-95">
                         Get Started
                     </button>
@@ -86,7 +105,7 @@ const LandingPage = ({ onStart }) => {
             </section>
 
             {/* Pricing */}
-            <section className="py-20 px-6">
+            <section id="pricing-section" className="py-20 px-6">
                 <div className="max-w-4xl mx-auto text-center space-y-12">
                     <h2 className="text-4xl font-black dark:text-white">Transparent Pricing</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
