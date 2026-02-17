@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     Calendar, Users, HardHat, Activity,
-    Tool, Target, Save, History,
+    Target, Save, History,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
-    Plus, Trash2, ChevronDown, Globe, Flag
+    Plus, Trash2, ChevronDown
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
