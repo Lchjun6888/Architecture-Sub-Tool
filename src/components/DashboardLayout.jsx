@@ -28,8 +28,8 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                     <NavItem icon={<LayoutDashboard size={20} />} label="Overview" onClick={() => onNav('overview')} active={activeNav === 'overview'} />
                     <NavItem icon={<Scissors size={20} />} label="Excel Splitter" onClick={() => onNav('excel')} active={activeNav === 'excel'} />
                     <NavItem icon={<Layers size={20} />} label="PDF Compare" onClick={() => onNav('pdf')} active={activeNav === 'pdf'} />
-                    <NavItem icon={<History size={20} />} label="Logs" />
-                    <NavItem icon={<Settings size={20} />} label="Settings" />
+                    <NavItem icon={<History size={20} />} label="Logs" onClick={() => onNav('logs')} active={activeNav === 'logs'} />
+                    <NavItem icon={<Settings size={20} />} label="Settings" onClick={() => onNav('settings')} active={activeNav === 'settings'} />
                 </nav>
 
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">

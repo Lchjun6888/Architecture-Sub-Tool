@@ -3,10 +3,13 @@ import ExcelSplitter from './ExcelSplitter'
 import LandingPage from './components/LandingPage'
 import DashboardLayout from './components/DashboardLayout'
 import PDFComparer from './components/PDFComparer'
+import DashboardOverview from './components/DashboardOverview'
+import SettingsView from './components/SettingsView'
+import LogsView from './components/LogsView'
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' | 'app'
-  const [activeSubView, setActiveSubView] = useState('excel'); // 'excel' | 'pdf' | 'overview'
+  const [activeSubView, setActiveSubView] = useState('overview'); // 'excel' | 'pdf' | 'overview' | 'settings' | 'logs'
 
   if (view === 'landing') {
     return <LandingPage onStart={() => setView('app')} />
@@ -18,11 +21,11 @@ function App() {
       onNav={setActiveSubView}
       activeNav={activeSubView}
     >
+      {activeSubView === 'overview' && <DashboardOverview onNav={setActiveSubView} />}
       {activeSubView === 'excel' && <ExcelSplitter />}
       {activeSubView === 'pdf' && <PDFComparer />}
-      {activeSubView === 'overview' && (
-        <div className="p-10 text-center text-slate-400 italic">Dashboard Overview Content Coming Soon</div>
-      )}
+      {activeSubView === 'logs' && <LogsView />}
+      {activeSubView === 'settings' && <SettingsView />}
     </DashboardLayout>
   )
 }
