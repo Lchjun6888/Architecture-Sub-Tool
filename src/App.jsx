@@ -7,6 +7,7 @@ import DashboardOverview from './components/DashboardOverview'
 import SettingsView from './components/SettingsView'
 import LogsView from './components/LogsView'
 import DailyLogView from './components/DailyLogView'
+import PayrollView from './components/PayrollView'
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' | 'app'
