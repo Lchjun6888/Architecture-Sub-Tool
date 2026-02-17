@@ -21,7 +21,8 @@ const PDFComparer = () => {
     const [progressText, setProgressText] = useState('');
     const [diffResults, setDiffResults] = useState([]);
     const [viewPage, setViewPage] = useState(0);
-    const [compareMode, setCompareMode] = useState('diff'); // 'diff' (3-panel) | 'overlay' (Single result)
+    const [compareMode, setCompareMode] = useState('overlay'); // 'diff' | 'overlay' | 'side' | 'slider'
+    const [sliderPos, setSliderPos] = useState(50);
 
     const pdfBeforeRef = useRef(null);
     const pdfAfterRef = useRef(null);
@@ -472,24 +473,30 @@ const PDFComparer = () => {
                                         </div>
 
                                         <div className="flex items-center gap-4">
-                                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[18px]">
-                                                <button
-                                                    onClick={() => setCompareMode('diff')}
-                                                    className={`
-                                                        flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black transition-all duration-300
-                                                        ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-[1.05]' : 'text-slate-500 hover:text-slate-700'}
-                                                    `}
-                                                >
-                                                    <Split size={14} /> 3-PANEL VIEW
-                                                </button>
+                                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[22px] shadow-inner">
                                                 <button
                                                     onClick={() => setCompareMode('overlay')}
-                                                    className={`
-                                                        flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black transition-all duration-300
-                                                        ${compareMode === 'overlay' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-[1.05]' : 'text-slate-500 hover:text-slate-700'}
-                                                    `}
+                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'overlay' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
                                                 >
-                                                    <Maximize2 size={14} /> OVERLAY ONLY
+                                                    <Maximize2 size={14} /> RESULT
+                                                </button>
+                                                <button
+                                                    onClick={() => setCompareMode('slider')}
+                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'slider' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
+                                                >
+                                                    <Split size={14} /> SLIDER
+                                                </button>
+                                                <button
+                                                    onClick={() => setCompareMode('side')}
+                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'side' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
+                                                >
+                                                    <Eye size={14} /> 2-PANEL
+                                                </button>
+                                                <button
+                                                    onClick={() => setCompareMode('diff')}
+                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm scale-110' : 'text-slate-500'}`}
+                                                >
+                                                    <Layers size={14} /> 3-PANEL
                                                 </button>
                                             </div>
                                             <button
@@ -503,55 +510,97 @@ const PDFComparer = () => {
                                     </div>
 
                                     {/* Interactive Scroll Area */}
-                                    <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-4 lg:p-6">
-                                        {compareMode === 'diff' ? (
-                                            /* THE 3-PANEL CENTERED VIEW */
+                                    <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950/80 custom-scrollbar-horizontal p-6">
+                                        {compareMode === 'diff' && (
+                                            /* --- 3-PANEL VIEW --- */
                                             <div className="flex gap-8 min-h-full items-start justify-center min-w-max px-4">
-                                                {/* Left Panel: Original */}
                                                 <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
-                                                    <div className="flex items-center gap-2 px-2">
-                                                        <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">01. Original Before</span>
-                                                    </div>
-                                                    <div className="relative rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl group-hover:shadow-2xl transition-all duration-500">
-                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="Original" className="w-full h-auto" />
-                                                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">01. BEFORE</span>
+                                                    <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl min-w-[300px]">
+                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="" className="w-full h-auto" />
                                                     </div>
                                                 </div>
-
-                                                {/* Center Panel: THE DIFF (Visual Result) */}
                                                 <div className="flex-[1.5] min-w-[500px] max-w-[850px] flex flex-col gap-3 group">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <div className="h-[2px] w-8 bg-blue-500/20 rounded-full" />
-                                                        <span className="text-[11px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em]">ANALYSIS PREVIEW</span>
-                                                        <div className="h-[2px] w-8 bg-blue-500/20 rounded-full" />
-                                                    </div>
-                                                    <div className="relative rounded-[32px] overflow-hidden border-4 border-white dark:border-slate-800 bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] group-hover:scale-[1.01] transition-all duration-500">
-                                                        <img src={diffResults[viewPage].diffDataUrl} alt="Diff Overlay" className="w-full h-auto" />
-                                                        <div className="absolute top-4 right-4 text-[10px] font-black bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-lg">CENTER RESULT</div>
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center">ANALYSIS RESULT</span>
+                                                    <div className="rounded-[32px] overflow-hidden border-4 border-white dark:border-slate-800 bg-white shadow-2xl scale-[1.02]">
+                                                        <img src={diffResults[viewPage].diffDataUrl} alt="" className="w-full h-auto" />
                                                     </div>
                                                 </div>
-
-                                                {/* Right Panel: Revised */}
                                                 <div className="flex-1 min-w-[380px] max-w-[550px] flex flex-col gap-3 group">
-                                                    <div className="flex items-center justify-end gap-2 px-2 text-right">
-                                                        <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">02. Revised After</span>
-                                                    </div>
-                                                    <div className="relative rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl group-hover:shadow-2xl transition-all duration-500">
-                                                        <img src={diffResults[viewPage].afterDataUrl} alt="Revised" className="w-full h-auto" />
-                                                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right px-2">02. AFTER</span>
+                                                    <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-xl min-w-[300px]">
+                                                        <img src={diffResults[viewPage].afterDataUrl} alt="" className="w-full h-auto" />
                                                     </div>
                                                 </div>
                                             </div>
-                                        ) : (
-                                            /* SINGLE OVERLAY VIEW */
+                                        )}
+
+                                        {compareMode === 'overlay' && (
+                                            /* --- SINGLE RESULT VIEW --- */
                                             <div className="flex justify-center min-h-full items-center p-4">
                                                 <div className="relative max-w-5xl w-full group">
-                                                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-[40px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                                                    <div className="absolute -inset-4 bg-blue-500/5 rounded-[40px] blur-2xl" />
                                                     <img
                                                         src={diffResults[viewPage].diffDataUrl}
-                                                        alt="Large Comparison Overlay"
-                                                        className="relative w-full h-auto shadow-2xl bg-white border border-slate-200 dark:border-slate-800 rounded-3xl"
+                                                        alt="Comparison Result"
+                                                        className="relative w-full h-auto shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-3xl"
                                                     />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {compareMode === 'side' && (
+                                            /* --- SIDE-BY-SIDE (2-PANEL) --- */
+                                            <div className="flex gap-4 min-w-max h-full shadow-inner">
+                                                <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg">
+                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest">Original Before</div>
+                                                    <img src={diffResults[viewPage].beforeDataUrl} alt="" className="w-full h-auto" />
+                                                </div>
+                                                <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg">
+                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest">Revised After</div>
+                                                    <img src={diffResults[viewPage].afterDataUrl} alt="" className="w-full h-auto" />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {compareMode === 'slider' && (
+                                            /* --- INTERACTIVE SLIDER VIEW --- */
+                                            <div className="flex justify-center min-h-full items-center p-4">
+                                                <div className="relative max-w-5xl w-full aspect-[4/3] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 select-none">
+                                                    {/* Background Image (After) */}
+                                                    <img src={diffResults[viewPage].afterDataUrl} className="absolute inset-0 w-full h-full object-contain" alt="After" />
+
+                                                    {/* Top Image (Before) with Clipping */}
+                                                    <div
+                                                        className="absolute inset-0 overflow-hidden border-r-2 border-white/50"
+                                                        style={{ width: `${sliderPos}%` }}
+                                                    >
+                                                        <img src={diffResults[viewPage].beforeDataUrl} className="absolute inset-0 w-[55.5vw] h-full object-contain" alt="Before" style={{ width: `calc(100% * (100 / ${sliderPos}))` }} />
+                                                    </div>
+
+                                                    {/* Custom Slider Handle */}
+                                                    <div
+                                                        className="absolute inset-y-0 z-10 w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] cursor-col-resize group"
+                                                        style={{ left: `${sliderPos}%` }}
+                                                    >
+                                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-xl flex items-center justify-center border-4 border-blue-500 scale-100 group-hover:scale-110 transition-transform">
+                                                            <div className="flex gap-1">
+                                                                <div className="w-1 h-3 bg-blue-500 rounded-full" />
+                                                                <div className="w-1 h-3 bg-blue-500 rounded-full" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Hidden Input Layer for Dragging */}
+                                                    <input
+                                                        type="range" min="0" max="100" value={sliderPos}
+                                                        onChange={(e) => setSliderPos(e.target.value)}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-20"
+                                                    />
+
+                                                    {/* Labels */}
+                                                    <div className="absolute bottom-6 left-6 px-4 py-2 bg-slate-900/60 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">BEFORE</div>
+                                                    <div className="absolute bottom-6 right-6 px-4 py-2 bg-blue-600/80 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">AFTER</div>
                                                 </div>
                                             </div>
                                         )}
