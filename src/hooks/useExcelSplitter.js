@@ -6,7 +6,7 @@ import JSZip from 'jszip';
 export const useExcelSplitter = () => {
     const [step, setStep] = useState(1);
     const [rowsPerFile, setRowsPerFile] = useState(28);
-    const [keywords, setKeywords] = useState(['Total', 'Subtotal']);
+    const [keywords, setKeywords] = useState([]);
     const [headerRows, setHeaderRows] = useState(4);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);

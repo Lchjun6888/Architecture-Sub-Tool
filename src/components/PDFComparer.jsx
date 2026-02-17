@@ -17,6 +17,7 @@ const PDFComparer = () => {
     // All-page results: array of { pageNum, diffDataUrl, beforeDataUrl, afterDataUrl, width, height, hasDiff }
     const [diffResults, setDiffResults] = useState([]);
     const [viewPage, setViewPage] = useState(0); // index into diffResults for detail view
+    const [compareMode, setCompareMode] = useState('diff'); // 'diff' | 'side'
 
     const pdfBeforeRef = useRef(null);
     const pdfAfterRef = useRef(null);
@@ -469,49 +470,97 @@ const PDFComparer = () => {
 
                     {/* Detail View — Enlarged selected page */}
                     {diffResults[viewPage] && (
-                        <div className="glass rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <div className="bg-slate-50 dark:bg-slate-900 px-6 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
+                        <div className="glass rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-slate-50 dark:bg-slate-900 px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700">
                                 <div className="flex items-center gap-3">
-                                    <button
-                                        disabled={viewPage <= 0}
-                                        onClick={() => setViewPage(p => p - 1)}
-                                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg disabled:opacity-30 transition-colors"
-                                    >
-                                        <ChevronLeft size={18} />
-                                    </button>
-                                    <span className="text-sm font-black">
-                                        Page {diffResults[viewPage].pageNum} / {diffResults.length}
-                                    </span>
-                                    <button
-                                        disabled={viewPage >= diffResults.length - 1}
-                                        onClick={() => setViewPage(p => p + 1)}
-                                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg disabled:opacity-30 transition-colors"
-                                    >
-                                        <ChevronRight size={18} />
-                                    </button>
-                                    {diffResults[viewPage].hasDiff ? (
-                                        <span className="text-xs px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full font-bold ml-2">
-                                            Changes Detected
+                                    <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                                        <button
+                                            disabled={viewPage <= 0}
+                                            onClick={() => setViewPage(p => p - 1)}
+                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-colors"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <span className="text-xs font-black min-w-[80px] text-center">
+                                            Page {diffResults[viewPage].pageNum} / {diffResults.length}
                                         </span>
-                                    ) : (
-                                        <span className="text-xs px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-bold ml-2">
-                                            Identical
+                                        <button
+                                            disabled={viewPage >= diffResults.length - 1}
+                                            onClick={() => setViewPage(p => p + 1)}
+                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md disabled:opacity-30 transition-colors"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="hidden xs:flex flex-col gap-0.5">
+                                        <span className="text-[10px] font-black text-slate-400 p-0 leading-none">DIFF SCORE</span>
+                                        <span className={`text-xs font-black p-0 leading-none ${diffResults[viewPage].hasDiff ? 'text-red-500' : 'text-green-500'}`}>
+                                            {diffResults[viewPage].diffPercent}% ({diffResults[viewPage].diffPixels.toLocaleString()}px)
                                         </span>
-                                    )}
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => downloadSingleDiff(diffResults[viewPage])}
-                                    className="flex items-center gap-2 px-4 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold hover:bg-blue-600 transition-colors"
-                                >
-                                    <Download size={14} /> Download PNG
-                                </button>
+
+                                <div className="flex items-center gap-2">
+                                    <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
+                                        <button
+                                            onClick={() => setCompareMode('diff')}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${compareMode === 'diff' ? 'bg-white dark:bg-slate-700 text-blue-500 shadow-sm' : 'text-slate-500'}`}
+                                        >
+                                            DIFF OVERLAY
+                                        </button>
+                                        <button
+                                            onClick={() => setCompareMode('side')}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${compareMode === 'side' ? 'bg-white dark:bg-slate-700 text-blue-500 shadow-sm' : 'text-slate-500'}`}
+                                        >
+                                            SIDE-BY-SIDE
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => downloadSingleDiff(diffResults[viewPage])}
+                                        className="p-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
+                                        title="Download this page"
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="overflow-auto bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-6" style={{ maxHeight: '70vh' }}>
-                                <img
-                                    src={diffResults[viewPage].diffDataUrl}
-                                    alt={`Page ${diffResults[viewPage].pageNum} detail`}
-                                    className="shadow-2xl bg-white max-w-full"
-                                />
+
+                            <div className="overflow-auto bg-slate-100 dark:bg-slate-950 p-4 lg:p-8 custom-scrollbar" style={{ maxHeight: '75vh', minHeight: '400px' }}>
+                                {compareMode === 'diff' ? (
+                                    <div className="flex justify-center flex-col items-center gap-4">
+                                        <img
+                                            src={diffResults[viewPage].diffDataUrl}
+                                            alt={`Page ${diffResults[viewPage].pageNum} detail`}
+                                            className="shadow-2xl bg-white border border-slate-200 dark:border-slate-800 transition-all duration-300"
+                                            style={{ width: '100%', maxWidth: '1200px' }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between px-2">
+                                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Original (Before)</span>
+                                                <span className="text-[10px] font-bold text-slate-300">Scale: {scale}x</span>
+                                            </div>
+                                            <img
+                                                src={diffResults[viewPage].beforeDataUrl}
+                                                alt="Before"
+                                                className="w-full shadow-xl bg-white border border-slate-200 dark:border-slate-800 rounded-lg transition-transform hover:scale-[1.01]"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between px-2">
+                                                <span className="text-xs font-black text-blue-500 uppercase tracking-widest">Revised (After)</span>
+                                                <span className="text-[10px] font-bold text-slate-300">Offset: {offset.x},{offset.y}</span>
+                                            </div>
+                                            <img
+                                                src={diffResults[viewPage].afterDataUrl}
+                                                alt="After"
+                                                className="w-full shadow-xl bg-white border border-slate-200 dark:border-slate-800 rounded-lg transition-transform hover:scale-[1.01]"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

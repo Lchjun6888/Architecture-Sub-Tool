@@ -17,14 +17,6 @@ const RuleConfigurator = ({ rowsPerFile, setRowsPerFile, keywords, setKeywords, 
                             className="w-24 px-3 py-1.5 bg-blue-500 text-white font-bold rounded-lg text-lg text-center outline-none focus:ring-2 focus:ring-blue-300"
                         />
                     </div>
-                    <input
-                        type="range"
-                        min="1"
-                        max="5000"
-                        value={Math.min(rowsPerFile, 5000)}
-                        onChange={(e) => setRowsPerFile(parseInt(e.target.value))}
-                        className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-                    />
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-700">
@@ -37,8 +29,8 @@ const RuleConfigurator = ({ rowsPerFile, setRowsPerFile, keywords, setKeywords, 
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <div className="grid grid-cols-2 gap-2 flex-1">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
                             {keywords.map((keyword, index) => (
                                 <div key={index} className="relative group">
                                     <input

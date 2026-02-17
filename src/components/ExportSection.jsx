@@ -18,10 +18,10 @@ const ExportSection = ({
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
-                <div className="text-center space-y-6">
+                <div className="text-center space-y-4 lg:space-y-6">
                     <div>
-                        <p className="text-slate-500 font-medium uppercase tracking-widest text-sm mb-1 px-4">Ready to export</p>
-                        <h2 className="text-4xl font-black text-slate-900 dark:text-white">
+                        <p className="text-slate-500 font-medium uppercase tracking-widest text-[10px] sm:text-sm mb-1 px-4">Ready to export</p>
+                        <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                             ~{estimatedFiles.toLocaleString()} Files
                         </h2>
                         <div className="mt-2 text-blue-500 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 inline-block px-3 py-1 rounded-full border border-blue-100 dark:border-blue-800">
