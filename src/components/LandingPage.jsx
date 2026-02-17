@@ -1,5 +1,17 @@
 import React from 'react';
-import { Bolt, CheckCircle, Shield, Scissors, ArrowRight, Zap, Star } from 'lucide-react';
+import {
+    FileSpreadsheet,
+    TableProperties,
+    Lock,
+    Zap,
+    ArrowRight,
+    CheckCircle,
+    Star,
+    ShieldCheck,
+    Cpu,
+    CreditCard,
+    Layers
+} from 'lucide-react';
 
 const LandingPage = ({ onStart }) => {
     const scrollToPricing = () => {
@@ -21,8 +33,8 @@ const LandingPage = ({ onStart }) => {
                     className="flex items-center gap-2 cursor-pointer group"
                     onClick={scrollToTop}
                 >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform">
-                        E
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
+                        <FileSpreadsheet size={22} strokeWidth={2.5} />
                     </div>
                     <span className="text-xl font-black tracking-tight dark:text-white group-hover:text-blue-500 transition-colors">ExcelFlow</span>
                 </div>
@@ -78,28 +90,28 @@ const LandingPage = ({ onStart }) => {
             </section>
 
             {/* Features */}
-            <section className="py-20 bg-white dark:bg-slate-800/50">
+            <section className="py-24 bg-white dark:bg-slate-800/50">
                 <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-                    <div className="space-y-4">
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
-                            <Scissors size={24} />
+                    <div className="space-y-4 group p-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                        <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            <TableProperties size={28} />
                         </div>
-                        <h3 className="text-xl font-bold dark:text-white">Smart Splitting</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Split by rows or trigger on specific keywords. Fully adjustable header persistence.</p>
+                        <h3 className="text-xl font-black dark:text-white">Smart Splitting</h3>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Split by rows or trigger on specific keywords. Fully adjustable header persistence for complex workbooks.</p>
                     </div>
-                    <div className="space-y-4">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
-                            <Shield size={24} />
+                    <div className="space-y-4 group p-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                        <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                            <Lock size={28} />
                         </div>
-                        <h3 className="text-xl font-bold dark:text-white">100% Private</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Your files never leave your browser. All processing is done locally on your machine.</p>
+                        <h3 className="text-xl font-black dark:text-white">Enterprise Privacy</h3>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Your files never leave your browser. All processing is encrypted and done locally on your machine.</p>
                     </div>
-                    <div className="space-y-4">
-                        <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
-                            <Bolt size={24} />
+                    <div className="space-y-4 group p-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                        <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <Cpu size={28} />
                         </div>
-                        <h3 className="text-xl font-bold dark:text-white">Lightning Fast</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Handle 1,000,000+ rows instantly. No more waiting for Excel to respond.</p>
+                        <h3 className="text-xl font-black dark:text-white">V3 Processing Engine</h3>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Handle 1,000,000+ rows instantly with our proprietary streaming data architecture.</p>
                     </div>
                 </div>
             </section>
