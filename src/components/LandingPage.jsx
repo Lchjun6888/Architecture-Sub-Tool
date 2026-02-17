@@ -190,7 +190,10 @@ const LandingPage = ({ onStart }) => {
                                     </li>
                                 </ul>
                             </div>
-                            <button className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group">
+                            <button
+                                onClick={() => window.open('https://archisubtool.lemonsqueezy.com/checkout/buy/72c39d38-bbc2-427f-a48a-7c5ee4d9388d', '_blank')}
+                                className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group"
+                            >
                                 Upgrade to Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
