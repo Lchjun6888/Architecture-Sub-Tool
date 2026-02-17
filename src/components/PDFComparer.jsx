@@ -434,17 +434,17 @@ const PDFComparer = () => {
                                             `}
                                             onClick={() => setViewPage(idx)}
                                         >
-                                            <div className="relative aspect-[3/4] bg-white group-hover:opacity-90 transition-opacity">
-                                                <img src={result.diffDataUrl} alt="" className="w-full h-full object-contain p-2" />
-                                                <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] text-white font-black shadow-lg">
-                                                    P. {result.pageNum}
-                                                </div>
-                                                {result.hasDiff && (
-                                                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-500/10 text-red-600 px-1.5 py-0.5 rounded-md text-[8px] font-black border border-red-200 animate-pulse">
-                                                        DIFF detected
-                                                    </div>
-                                                )}
+                                            <div className="aspect-[4/3] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden bg-white group-hover:border-blue-500 transition-all shadow-sm">
+                                                <img src={result.beforeDataUrl || result.afterDataUrl} alt="" className="w-full h-full object-contain p-2" />
                                             </div>
+                                            <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[9px] text-white font-black shadow-lg">
+                                                P. {result.pageNum}
+                                            </div>
+                                            {result.hasDiff && (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-500 text-white px-1.5 py-0.5 rounded-md text-[8px] font-black shadow-lg animate-pulse">
+                                                    DIFF detected
+                                                </div>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -537,13 +537,13 @@ const PDFComparer = () => {
 
                                         {compareMode === 'overlay' && (
                                             /* --- SINGLE RESULT VIEW --- */
-                                            <div className="flex justify-center min-h-full items-center p-4">
-                                                <div className="relative max-w-5xl w-full group">
-                                                    <div className="absolute -inset-4 bg-blue-500/5 rounded-[40px] blur-2xl" />
+                                            <div className="flex justify-center h-full items-center">
+                                                <div className="relative h-full w-full group flex items-center justify-center">
+                                                    <div className="absolute inset-0 bg-blue-500/5 rounded-[40px] blur-3xl" />
                                                     <img
                                                         src={diffResults[viewPage].diffDataUrl}
                                                         alt="Comparison Result"
-                                                        className="relative w-full h-auto shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-3xl"
+                                                        className="relative max-w-full max-h-full object-contain shadow-2xl bg-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl"
                                                     />
                                                 </div>
                                             </div>
@@ -551,34 +551,33 @@ const PDFComparer = () => {
 
                                         {compareMode === 'side' && (
                                             /* --- SIDE-BY-SIDE (2-PANEL) --- */
-                                            <div className="flex gap-4 min-w-max h-full shadow-inner">
-                                                <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg">
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest">Original Before</div>
-                                                    <img src={diffResults[viewPage].beforeDataUrl} alt="" className="w-full h-auto" />
+                                            <div className="flex gap-6 h-full w-full">
+                                                <div className="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col">
+                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest flex-none">Original Before</div>
+                                                    <div className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-slate-50/30">
+                                                        <img src={diffResults[viewPage].beforeDataUrl} alt="" className="max-w-full max-h-full object-contain shadow-sm" />
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg">
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest">Revised After</div>
-                                                    <img src={diffResults[viewPage].afterDataUrl} alt="" className="w-full h-auto" />
+                                                <div className="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col">
+                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-center font-black text-[9px] uppercase tracking-widest flex-none">Revised After</div>
+                                                    <div className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-slate-50/30">
+                                                        <img src={diffResults[viewPage].afterDataUrl} alt="" className="max-w-full max-h-full object-contain shadow-sm" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
 
                                         {compareMode === 'slider' && (
                                             /* --- INTERACTIVE SLIDER VIEW --- */
-                                            <div className="flex justify-center min-h-full items-center p-4">
-                                                <div className="relative max-w-5xl w-full aspect-[4/3] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 select-none">
-                                                    {/* Background Image (After) */}
+                                            <div className="flex justify-center h-full items-center">
+                                                <div className="relative max-w-full max-h-full aspect-[4/3] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 select-none">
                                                     <img src={diffResults[viewPage].afterDataUrl} className="absolute inset-0 w-full h-full object-contain" alt="After" />
-
-                                                    {/* Top Image (Before) with Clipping */}
                                                     <div
                                                         className="absolute inset-0 overflow-hidden border-r-2 border-white/50"
                                                         style={{ width: `${sliderPos}%` }}
                                                     >
-                                                        <img src={diffResults[viewPage].beforeDataUrl} className="absolute inset-0 w-[55.5vw] h-full object-contain" alt="Before" style={{ width: `calc(100% * (100 / ${sliderPos}))` }} />
+                                                        <img src={diffResults[viewPage].beforeDataUrl} className="absolute inset-0 w-full h-full object-contain" alt="Before" style={{ width: `calc(100% * (100 / ${sliderPos}))` }} />
                                                     </div>
-
-                                                    {/* Custom Slider Handle */}
                                                     <div
                                                         className="absolute inset-y-0 z-10 w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] cursor-col-resize group"
                                                         style={{ left: `${sliderPos}%` }}
@@ -590,15 +589,11 @@ const PDFComparer = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-
-                                                    {/* Hidden Input Layer for Dragging */}
                                                     <input
                                                         type="range" min="0" max="100" value={sliderPos}
                                                         onChange={(e) => setSliderPos(e.target.value)}
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-20"
                                                     />
-
-                                                    {/* Labels */}
                                                     <div className="absolute bottom-6 left-6 px-4 py-2 bg-slate-900/60 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">BEFORE</div>
                                                     <div className="absolute bottom-6 right-6 px-4 py-2 bg-blue-600/80 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest pointer-events-none">AFTER</div>
                                                 </div>
