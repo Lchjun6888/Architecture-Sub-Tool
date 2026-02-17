@@ -160,7 +160,7 @@ const LandingPage = ({ onStart }) => {
                                     <h4 className="text-lg font-bold flex items-center gap-2">
                                         Pro Plan <Star size={16} className="text-yellow-400 fill-yellow-400" />
                                     </h4>
-                                    <div className="text-4xl font-black mt-2">$19 <span className="text-sm font-normal text-blue-300">/ month</span></div>
+                                    <div className="text-4xl font-black mt-2">$9.9 <span className="text-sm font-normal text-blue-300">/ month</span></div>
                                     <p className="text-sm text-slate-400 mt-4 leading-relaxed">For architects, engineers, and data professionals who need efficiency.</p>
                                 </div>
                                 <ul className="space-y-4 mt-8">
