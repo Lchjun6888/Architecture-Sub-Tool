@@ -43,11 +43,15 @@ const LandingPage = ({ onStart }) => {
                     </div>
 
                     {/* Preview Mockup */}
-                    <div className="mt-16 relative transform perspective-1000 rotate-x-2">
+                    <div className="mt-16 relative transform perspective-1000 rotate-x-2 lg:rotate-x-1">
                         <div className="absolute inset-0 bg-blue-500/20 blur-[100px] -z-10 rounded-full scale-75" />
                         <div className="glass rounded-2xl premium-shadow border border-white/20 p-2 max-w-5xl mx-auto overflow-hidden animate-float">
-                            <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg h-[400px] flex items-center justify-center text-slate-400 font-mono text-sm">
-                                [ Interactive Dashboard Preview Mockup ]
+                            <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden">
+                                <img
+                                    src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop"
+                                    alt="Dashboard Mockup"
+                                    className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
+                                />
                             </div>
                         </div>
                     </div>
