@@ -36,7 +36,7 @@ const LandingPage = ({ onStart }) => {
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
                         <FileSpreadsheet size={22} strokeWidth={2.5} />
                     </div>
-                    <span className="text-xl font-black tracking-tight dark:text-white group-hover:text-blue-500 transition-colors">ExcelFlow</span>
+                    <span className="text-xl font-black tracking-tight dark:text-white group-hover:text-blue-500 transition-colors">ArchSub</span>
                 </div>
                 <div className="flex gap-4">
                     <button
@@ -55,14 +55,14 @@ const LandingPage = ({ onStart }) => {
             <section className="pt-32 pb-20 px-6">
                 <div className="max-w-6xl mx-auto text-center space-y-8">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-xs font-bold animate-pulse">
-                        <Zap size={14} /> New: AI Split Engine v2.0
+                        <Zap size={14} /> New: Architecture Split Engine v2.0
                     </div>
                     <h1 className="text-6xl md:text-7xl font-black tracking-tighter text-slate-900 dark:text-white leading-[1.1]">
-                        Splitting Excel Files <br />
-                        <span className="text-gradient">Shouldn't Be Hard.</span>
+                        Splitting Archive Files <br />
+                        <span className="text-gradient">Made for Builders.</span>
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-200 max-w-2xl mx-auto leading-relaxed">
-                        Split large workbooks into multiple files in seconds. Preserve headers, apply smart keyword logic, and automate your workflow with one click.
+                        A dedicated suite for architects and engineers. Split complex bill of materials, preserve styles, and automate your workflow with professional precision.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
                         <button onClick={onStart} className="w-full sm:w-auto px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-lg font-black transition-all shadow-xl shadow-blue-500/40 flex items-center justify-center gap-2 group active:scale-95">

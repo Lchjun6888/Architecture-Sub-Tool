@@ -14,7 +14,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                         E
                     </div>
                     <div>
-                        <span className="text-xl font-black tracking-tight dark:text-white block leading-none group-hover:text-blue-500 transition-colors">ExcelFlow</span>
+                        <span className="text-xl font-black tracking-tight dark:text-white block leading-none group-hover:text-blue-500 transition-colors">ArchSub</span>
                         <span className="text-xs text-slate-400 font-medium">SaaS Dashboard</span>
                     </div>
                 </div>
