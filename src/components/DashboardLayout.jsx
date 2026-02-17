@@ -10,12 +10,17 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                     className="flex items-center gap-3 mb-10 px-2 cursor-pointer group"
                     onClick={onBack}
                 >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                        E
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
+                        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M5 21V7L12 3L19 7V21" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M9 21V11H15V21" stroke="currentColor" strokeWidth="2" />
+                            <path d="M5 11H19" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+                        </svg>
                     </div>
                     <div>
                         <span className="text-xl font-black tracking-tight dark:text-white block leading-none group-hover:text-blue-500 transition-colors">ArchSub</span>
-                        <span className="text-xs text-slate-400 font-medium">SaaS Dashboard</span>
+                        <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Architecture Assistant</span>
                     </div>
                 </div>
 
