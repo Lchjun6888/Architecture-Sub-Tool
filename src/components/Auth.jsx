@@ -13,6 +13,12 @@ const Auth = ({ onAuthSuccess }) => {
 
     const handleAuth = async (e) => {
         e.preventDefault();
+
+        if (!supabase) {
+            setError('Auth system not configured. Please add Supabase environment variables.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 

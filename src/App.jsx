@@ -18,15 +18,27 @@ function App() {
   const [loading, setLoading] = useState(true); // Prevent blank screen during session check
 
   useEffect(() => {
-    // Check active session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        setIsLoggedIn(true);
-        setView('dashboard');
-      }
+    if (!supabase) {
+      console.error('Supabase client not initialized. Check your environment variables.');
       setLoading(false);
-    });
+      return;
+    }
+
+    // Check active session on mount
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session) {
+          setIsLoggedIn(true);
+          setView('dashboard');
+        }
+      })
+      .catch((err) => {
+        console.error('Session check failed:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     // Listen for auth state changes (handles email verification callback)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
