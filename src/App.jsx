@@ -16,9 +16,12 @@ function App() {
   const [view, setView] = useState('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     if (!supabase) {
       console.warn('Supabase client not initialized. Check environment variables.');
+      setLoading(false);
       return;
     }
 
@@ -26,6 +29,10 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) setIsLoggedIn(true);
+      setLoading(false);
+    }).catch(err => {
+      console.error('Session check error:', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -41,6 +48,7 @@ function App() {
         setIsLoggedIn(false);
         setView('landing');
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -60,7 +68,20 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setView('landing');
+    setIsLoggedIn(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-bold text-sm">Loading ArchSub...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'auth' && !isLoggedIn) {
     return (
@@ -76,6 +97,7 @@ function App() {
         onBack={() => setView('landing')}
         activeNav={view === 'dashboard' ? 'overview' : view}
         onNav={setView}
+        onLogout={handleLogout}
       >
         {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} /> : null}
         {view === 'excel' ? <ExcelSplitter /> : null}
