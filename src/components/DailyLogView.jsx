@@ -41,16 +41,16 @@ const DailyLogView = ({ user }) => {
     // Main Form Data
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
-        country: 'japan',
-        safetyStd: COUNTRIES.japan.safetyStd,
+        country: 'usa',
+        safetyStd: COUNTRIES.usa.safetyStd,
         safety: { ky_activity: 'Done', morning_exercise: '8:00 AM', vital_signs: 'All staff normal' },
 
         // Staffing: Array for dynamic addition
         manpower: [
-            { id: 1, role: 'Manager', count: 2 },
-            { id: 2, role: 'Engineer', count: 4 },
-            { id: 3, role: 'Skilled Labor', count: 15 },
-            { id: 4, role: 'Unskilled Labor', count: 20 },
+            { id: 1, role: 'Manager', count: 0 },
+            { id: 2, role: 'Engineer', count: 0 },
+            { id: 3, role: 'Skilled Labor', count: 0 },
+            { id: 4, role: 'Unskilled Labor', count: 0 },
         ],
 
         // Tasks: with Start/End date
@@ -60,8 +60,8 @@ const DailyLogView = ({ user }) => {
 
         // Equipment: with count
         equipment: [
-            { id: 1, name: 'Boom Lift', count: 2, status: 'Active' },
-            { id: 2, name: 'Welding Machine', count: 5, status: 'Checked' }
+            { id: 1, name: 'Boom Lift', count: 0, status: 'Active' },
+            { id: 2, name: 'Welding Machine', count: 0, status: 'Checked' }
         ],
 
         targets: {
@@ -280,8 +280,10 @@ const DailyLogView = ({ user }) => {
                 setActiveTab('history');
                 alert('Log saved successfully!');
             } catch (e) {
-                console.error(e);
-                alert('Error saving log');
+                console.error("Save Error:", e);
+                // Fallback attempt to local storage if supabase fails?
+                // For now, give a clear error message
+                alert(`Error saving log: ${e.message || 'Unknown error'}. Check console for details.`);
             } finally {
                 setLoading(false);
             }
