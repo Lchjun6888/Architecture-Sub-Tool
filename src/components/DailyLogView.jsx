@@ -82,7 +82,9 @@ const DailyLogView = () => {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed)) {
-                    setHistory(parsed);
+                    // Filter out invalid entries to prevent crashes
+                    const validHistory = parsed.filter(item => item && typeof item === 'object' && item.id);
+                    setHistory(validHistory);
                 } else {
                     setHistory([]);
                 }
@@ -100,11 +102,11 @@ const DailyLogView = () => {
 
         // Load latest log or default
         const latest = history[0];
-        if (latest) {
+        if (latest && latest.content) {
             setFormData({
                 ...latest.content,
                 date: new Date().toISOString().split('T')[0], // Reset date to today
-                tasks: latest.content.tasks.map(t => ({ ...t })), // Copy tasks
+                tasks: Array.isArray(latest.content.tasks) ? latest.content.tasks.map(t => ({ ...t })) : [], // Copy tasks safely
                 // Keep project dates
                 targets: {
                     startDate: latest.content.targets?.startDate || new Date().toISOString().split('T')[0],
@@ -630,30 +632,33 @@ const DailyLogView = () => {
                 // 5. History Tab with Edit/Delete
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {(!history || history.length === 0) ? <div className="col-span-full py-20 text-center text-slate-400 font-black">No logs found.</div> :
-                        history.map((log) => (
-                            <div key={log.id} onClick={() => editLog(log)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 hover:border-blue-500 shadow-sm hover:shadow-lg transition-all cursor-pointer group relative">
-                                <button onClick={(e) => deleteLog(log.id, e)} className="absolute top-4 right-4 p-2 bg-slate-50 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-                                    <Trash2 size={16} />
-                                </button>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
-                                    <div>
-                                        <div className="text-[10px] font-black text-slate-400 uppercase">Log Date</div>
-                                        <div className="font-bold text-lg dark:text-white">{log.date || 'N/A'}</div>
+                        history.map((log) => {
+                            if (!log || !log.id) return null; // Skip invalid entries
+                            return (
+                                <div key={log.id} onClick={() => editLog(log)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 hover:border-blue-500 shadow-sm hover:shadow-lg transition-all cursor-pointer group relative">
+                                    <button onClick={(e) => deleteLog(log.id, e)} className="absolute top-4 right-4 p-2 bg-slate-50 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                                        <Trash2 size={16} />
+                                    </button>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
+                                        <div>
+                                            <div className="text-[10px] font-black text-slate-400 uppercase">Log Date</div>
+                                            <div className="font-bold text-lg dark:text-white">{log.date || 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 border-t border-slate-100 pt-4">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500 font-medium">Day Progress</span>
+                                            <span className="font-black text-blue-600">{log.current_day || 0} / {log.total_days || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500 font-medium">Manpower</span>
+                                            <span className="font-bold dark:text-white">{(log.content?.manpower || []).reduce((s, m) => s + (parseInt(m.count) || 0), 0)} Pax</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2 border-t border-slate-100 pt-4">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500 font-medium">Day Progress</span>
-                                        <span className="font-black text-blue-600">{log.current_day || 0} / {log.total_days || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500 font-medium">Manpower</span>
-                                        <span className="font-bold dark:text-white">{(log.content?.manpower || []).reduce((s, m) => s + (parseInt(m.count) || 0), 0)} Pax</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                 </div>
             )}
         </div>
