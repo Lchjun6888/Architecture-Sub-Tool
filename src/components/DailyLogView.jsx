@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Calendar, Users, HardHat, Activity,
     Target, Save, History,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
-    Plus, Trash2, ChevronDown, Wrench
+    Plus, Trash2, ChevronDown, Wrench,
+    Cloud, Sun, MapPin, Droplets, Wind
 } from 'lucide-react';
 // Supabase 연동은 나중에 추가 예정
 // import { supabase } from '../supabaseClient';
@@ -80,13 +80,18 @@ const DailyLogView = () => {
             vital_signs: 'All staff normal'
         },
         manpower: {
-            local_staff: 45,
-            managers: 4,
+            manager: 2,
+            engineer: 4,
+            skilled_labor: 15,
+            unskilled_labor: 20,
+            painter: 3,
+            electrician: 2,
+            driver: 3,
             total: 49
         },
         tasks: [
-            { id: 1, name: 'Foundation Rebar Installation', percent: 65, status: 'in_progress' },
-            { id: 2, name: 'Concrete Pouring - Block A', percent: 100, status: 'completed' }
+            { id: 1, name: 'Foundation Rebar Installation', startDate: new Date().toISOString().split('T')[0], duration: 10, percent: 65, status: 'in_progress' },
+            { id: 2, name: 'Concrete Pouring - Block A', startDate: new Date().toISOString().split('T')[0], duration: 5, percent: 100, status: 'completed' }
         ],
         equipment: {
             list: [
@@ -103,6 +108,48 @@ const DailyLogView = () => {
         fieldNotes: '',
         signature: ''
     });
+
+    const [weather, setWeather] = useState({ temp: '--', condition: 'Sunny', hum: '--', wind: '--', city: 'Seoul' });
+    const CITIES = ['Seoul', 'Tokyo', 'New York', 'London', 'Dubai', 'Ho Chi Minh', 'Singapore'];
+
+    useEffect(() => {
+        // Mock Weather Fetch or Real API
+        const fetchWeather = async () => {
+            try {
+                // Using Open-Meteo (Free, No Key)
+                const cityCoords = {
+                    'Seoul': { lat: 37.5665, lon: 126.9780 },
+                    'Tokyo': { lat: 35.6762, lon: 139.6503 },
+                    'New York': { lat: 40.7128, lon: -74.0060 },
+                    'London': { lat: 51.5074, lon: -0.1278 },
+                    'Dubai': { lat: 25.2048, lon: 55.2708 },
+                    'Ho Chi Minh': { lat: 10.8231, lon: 106.6297 },
+                    'Singapore': { lat: 1.3521, lon: 103.8198 }
+                };
+                const coords = cityCoords[weather.city] || cityCoords['Seoul'];
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current_weather=true`);
+                const data = await res.json();
+
+                setWeather(prev => ({
+                    ...prev,
+                    temp: data.current_weather.temperature,
+                    condition: getWxCondition(data.current_weather.weathercode),
+                    wind: data.current_weather.windspeed
+                }));
+            } catch (e) {
+                console.log('Weather fetch error', e);
+            }
+        };
+        fetchWeather();
+    }, [weather.city]);
+
+    const getWxCondition = (code) => {
+        if (code === 0) return 'Sunny';
+        if (code < 4) return 'Partly Cloudy';
+        if (code < 50) return 'Foggy';
+        if (code < 80) return 'Rainy';
+        return 'Stormy';
+    };
 
     useEffect(() => {
         fetchHistory();
@@ -140,7 +187,7 @@ const DailyLogView = () => {
         const newId = Date.now();
         setFormData(prev => ({
             ...prev,
-            tasks: [...prev.tasks, { id: newId, name: '', percent: 0, status: 'not_started' }]
+            tasks: [...prev.tasks, { id: newId, name: '', startDate: formData.date, duration: 7, percent: 0, status: 'not_started' }]
         }));
     };
 
@@ -173,7 +220,25 @@ const DailyLogView = () => {
     const fetchHistory = () => {
         try {
             const saved = localStorage.getItem('daily_logs');
-            if (saved) setHistory(JSON.parse(saved));
+            if (saved) {
+                const parsedHistory = JSON.parse(saved);
+                setHistory(parsedHistory);
+
+                // Pre-fill Cumulative Data from Last Log
+                if (parsedHistory.length > 0 && activeTab === 'new') {
+                    const lastLog = parsedHistory[0];
+                    if (lastLog.total_days && lastLog.current_day) {
+                        setFormData(prev => ({
+                            ...prev,
+                            targets: {
+                                ...prev.targets,
+                                total_days: lastLog.total_days,
+                                current_day: parseInt(lastLog.current_day) + 1
+                            }
+                        }));
+                    }
+                }
+            }
         } catch (err) {
             console.error(err);
         }
@@ -238,7 +303,7 @@ const DailyLogView = () => {
             {activeTab === 'new' ? (
                 <>
                     {/* ═══════ TOP INFO BAR ═══════ */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Date */}
                         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0">
@@ -263,7 +328,7 @@ const DailyLogView = () => {
                                 className="flex items-center gap-3 w-full text-left group"
                             >
                                 <span className="text-3xl leading-none">{currentCountry.flag}</span>
-                                <span className="font-bold text-lg dark:text-white flex-1">{currentCountry.label}</span>
+                                <span className="font-bold text-lg dark:text-white flex-1 truncate">{currentCountry.label}</span>
                                 <ChevronDown size={18} className={`text-slate-400 transition-transform ${countryOpen ? 'rotate-180' : ''}`} />
                             </button>
 
@@ -286,6 +351,30 @@ const DailyLogView = () => {
                                     ))}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Weather Widget */}
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative group">
+                            <div className="absolute top-3 right-3">
+                                <select
+                                    value={weather.city}
+                                    onChange={(e) => setWeather({ ...weather, city: e.target.value })}
+                                    className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 rounded-lg border-none py-1 px-2 cursor-pointer dark:text-white focus:ring-0"
+                                >
+                                    {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 shrink-0">
+                                    {weather.condition.includes('Rain') ? <Droplets size={22} /> : weather.condition.includes('Cloud') ? <Cloud size={22} /> : <Sun size={22} />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{weather.city}</div>
+                                    <div className="font-bold text-lg dark:text-white flex items-center gap-2 whitespace-nowrap">
+                                        {weather.temp}°C <span className="text-xs font-normal text-slate-400 hidden xl:inline">({weather.condition})</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Total Personnel */}
@@ -343,55 +432,55 @@ const DailyLogView = () => {
                                             : task.status === 'delayed'
                                                 ? 'bg-red-500'
                                                 : 'bg-blue-500';
+
+                                        // Calculate Expected Progress
+                                        const start = new Date(task.startDate);
+                                        const cur = new Date(formData.date);
+                                        const diff = Math.ceil((cur - start) / (1000 * 60 * 60 * 24));
+                                        const expected = task.duration > 0 ? Math.min(100, Math.max(0, Math.round((diff / task.duration) * 100))) : 0;
+
                                         return (
-                                            <div key={task.id} className="group">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <input
-                                                        value={task.name}
-                                                        onChange={e => updateTask(task.id, 'name', e.target.value)}
-                                                        placeholder="Task name..."
-                                                        className="flex-1 font-bold text-sm bg-transparent border-none focus:ring-0 p-0 dark:text-white placeholder:text-slate-300"
-                                                    />
-                                                    <button
-                                                        onClick={() => removeTask(task.id)}
-                                                        className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-all p-1"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-
-                                                <div className="flex items-center gap-3">
-                                                    {/* Progress Bar */}
-                                                    <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                                                        <div
-                                                            className={`h-full ${barColor} rounded-full transition-all duration-500 ease-out`}
-                                                            style={{ width: `${task.percent}%` }}
-                                                        />
-                                                    </div>
-
-                                                    {/* Percent Input */}
-                                                    <div className="flex items-center gap-0.5 min-w-[60px]">
+                                            <div key={task.id} className="group p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                                                <div className="flex flex-col gap-3">
+                                                    {/* Top Row: Name & Delete */}
+                                                    <div className="flex items-center gap-2">
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="100"
-                                                            value={task.percent}
-                                                            onChange={e => updateTask(task.id, 'percent', e.target.value)}
-                                                            className="w-10 text-right text-xs font-black bg-transparent border-none focus:ring-0 p-0 dark:text-white"
+                                                            value={task.name}
+                                                            onChange={e => updateTask(task.id, 'name', e.target.value)}
+                                                            placeholder="Task Name"
+                                                            className="flex-1 font-bold text-sm bg-transparent border-none p-0 focus:ring-0 dark:text-white placeholder:text-slate-400"
                                                         />
-                                                        <span className="text-xs text-slate-400 font-bold">%</span>
+                                                        <button onClick={() => removeTask(task.id)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                                                     </div>
 
-                                                    {/* Status Dropdown */}
-                                                    <select
-                                                        value={task.status}
-                                                        onChange={e => updateTask(task.id, 'status', e.target.value)}
-                                                        className={`text-[10px] font-black uppercase rounded-full px-3 py-1.5 border-none cursor-pointer focus:ring-2 focus:ring-blue-300 ${statusObj.color}`}
-                                                    >
-                                                        {STATUS_OPTIONS.map(s => (
-                                                            <option key={s.value} value={s.value}>{s.label}</option>
-                                                        ))}
-                                                    </select>
+                                                    {/* Date & Duration Inputs */}
+                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 font-medium">
+                                                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            <span className="text-[10px] uppercase font-black text-slate-400">Start</span>
+                                                            <input type="date" value={task.startDate} onChange={e => updateTask(task.id, 'startDate', e.target.value)} className="bg-transparent border-none p-0 w-24 text-xs font-bold dark:text-slate-300" />
+                                                        </div>
+                                                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            <span className="text-[10px] uppercase font-black text-slate-400">Days</span>
+                                                            <input type="number" value={task.duration} onChange={e => updateTask(task.id, 'duration', e.target.value)} className="bg-transparent border-none p-0 w-8 text-center text-xs font-bold dark:text-slate-300" />
+                                                        </div>
+                                                        <div className="ml-auto text-blue-500 font-black text-[10px] uppercase bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
+                                                            Exp: {expected}%
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Progress & Status */}
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner relative">
+                                                            <div className={`h-full ${barColor} rounded-full transition-all duration-500 ease-out relative z-10`} style={{ width: `${task.percent}%` }} />
+                                                            {/* Expected Marker */}
+                                                            <div className="absolute top-0 bottom-0 w-1 bg-slate-400/50 z-20" style={{ left: `${expected}%` }} title={`Expected: ${expected}%`} />
+                                                        </div>
+                                                        <input type="number" value={task.percent} onChange={e => updateTask(task.id, 'percent', e.target.value)} className="w-10 text-right text-xs font-black bg-transparent border-none p-0 dark:text-white" />
+                                                        <span className="text-xs font-bold text-slate-400">%</span>
+                                                        <select value={task.status} onChange={e => updateTask(task.id, 'status', e.target.value)} className={`text-[10px] uppercase font-black rounded-lg py-1 px-2 border-none cursor-pointer ${statusObj.color}`}>
+                                                            {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -475,26 +564,21 @@ const DailyLogView = () => {
                                 <div className="p-6 space-y-4">
                                     {Object.entries(formData.manpower).filter(([k]) => k !== 'total').map(([key, val]) => (
                                         <div key={key} className="flex items-center justify-between">
-                                            <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                                            <div className="flex items-center gap-1.5">
-                                                <button
-                                                    onClick={() => {
-                                                        const nm = { ...formData.manpower, [key]: Math.max(0, val - 1) };
-                                                        nm.total = nm.local_staff + nm.managers;
-                                                        setFormData({ ...formData, manpower: nm });
-                                                    }}
-                                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-lg font-bold"
-                                                >−</button>
-                                                <span className="w-10 text-center font-black dark:text-white">{val}</span>
-                                                <button
-                                                    onClick={() => {
-                                                        const nm = { ...formData.manpower, [key]: val + 1 };
-                                                        nm.total = nm.local_staff + nm.managers;
-                                                        setFormData({ ...formData, manpower: nm });
-                                                    }}
-                                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-lg font-bold"
-                                                >+</button>
-                                            </div>
+                                            <span className="text-sm text-slate-600 dark:text-slate-400 font-medium capitalize">{key.replace(/_/g, ' ')}</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={val}
+                                                onChange={(e) => {
+                                                    const newVal = parseInt(e.target.value) || 0;
+                                                    const newManpower = { ...formData.manpower, [key]: newVal };
+                                                    const total = Object.entries(newManpower)
+                                                        .filter(([k]) => k !== 'total')
+                                                        .reduce((sum, [_, v]) => sum + v, 0);
+                                                    setFormData({ ...formData, manpower: { ...newManpower, total } });
+                                                }}
+                                                className="w-20 text-center font-bold dark:text-white bg-slate-50 dark:bg-slate-800 rounded-lg border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-slate-700 transition-all py-1.5 text-sm"
+                                            />
                                         </div>
                                     ))}
                                     <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">

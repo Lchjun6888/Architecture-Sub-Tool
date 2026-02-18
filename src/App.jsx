@@ -3,7 +3,7 @@ import LandingPage from './components/LandingPage';
 import DashboardLayout from './components/DashboardLayout';
 import ExcelSplitter from './ExcelSplitter';
 import DashboardOverview from './components/DashboardOverview';
-import LogsView from './components/LogsView';
+
 import PDFComparer from './components/PDFComparer';
 import SettingsView from './components/SettingsView';
 import DailyLogView from './components/DailyLogView';
@@ -104,7 +104,7 @@ function App() {
         {view === 'excel' ? <ExcelSplitter /> : null}
         {view === 'pdf' ? <PDFComparer /> : null}
         {view === 'daily' ? <DailyLogView /> : null}
-        {view === 'logs' ? <LogsView /> : null}
+
         {view === 'payroll' ? <PayrollView /> : null}
         {view === 'settings' ? <SettingsView /> : null}
       </DashboardLayout>
