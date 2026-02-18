@@ -1,148 +1,150 @@
 import React, { useState, useEffect } from 'react';
 import {
     Calendar, Users, HardHat, Activity,
-    Target, Save, History,
+    Target, Save, History, Search,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
     Plus, Trash2, ChevronDown, Wrench,
-    Cloud, Sun, MapPin, Droplets, Wind
+    Cloud, Sun, MapPin, Droplets, Wind, Edit3, X
 } from 'lucide-react';
-// Supabase 연동은 나중에 추가 예정
-// import { supabase } from '../supabaseClient';
 
-// Country config - safety standards, labels
 const COUNTRIES = {
-    japan: {
-        label: 'Japan',
-        flag: '🇯🇵',
-        title: 'JAPAN CONSTRUCTION DAILY LOG',
-        safetyStd: 'Japanese Law / 5S',
-        focus: 'KY (Hazard Pred.) / Discipline'
-    },
-    korea: {
-        label: 'Korea',
-        flag: '🇰🇷',
-        title: '대한민국 건설 일일 로그',
-        safetyStd: '산업안전보건법 / 5S',
-        focus: 'TBM (위험예지활동) / 안전수칙'
-    },
-    usa: {
-        label: 'USA',
-        flag: '🇺🇸',
-        title: 'USA CONSTRUCTION DAILY LOG',
-        safetyStd: 'OSHA 29 CFR 1926',
-        focus: 'Toolbox Talk / PPE Compliance'
-    },
-    vietnam: {
-        label: 'Vietnam',
-        flag: '🇻🇳',
-        title: 'VIETNAM CONSTRUCTION DAILY LOG',
-        safetyStd: 'Vietnamese OHS Law / 5S',
-        focus: 'Safety Briefing / Discipline'
-    },
-    uae: {
-        label: 'UAE',
-        flag: '🇦🇪',
-        title: 'UAE CONSTRUCTION DAILY LOG',
-        safetyStd: 'OSHAD / Abu Dhabi Code',
-        focus: 'PTW / Heat Stress Protocol'
-    },
-    singapore: {
-        label: 'Singapore',
-        flag: '🇸🇬',
-        title: 'SINGAPORE CONSTRUCTION DAILY LOG',
-        safetyStd: 'WSH Act / SS 506',
-        focus: 'Risk Assessment / Toolbox Talk'
-    }
+    japan: { label: 'Japan', flag: '🇯🇵', safetyStd: 'Japanese Law / 5S', focus: 'KY (Hazard Pred.) / Discipline' },
+    korea: { label: 'Korea', flag: '🇰🇷', safetyStd: '산업안전보건법 / 5S', focus: 'TBM (위험예지활동) / 안전수칙' },
+    usa: { label: 'USA', flag: '🇺🇸', safetyStd: 'OSHA 29 CFR 1926', focus: 'Toolbox Talk / PPE Compliance' },
+    vietnam: { label: 'Vietnam', flag: '🇻🇳', safetyStd: 'Vietnamese OHS Law / 5S', focus: 'Safety Briefing / Discipline' },
+    uae: { label: 'UAE', flag: '🇦🇪', safetyStd: 'OSHAD / Abu Dhabi Code', focus: 'PTW / Heat Stress Protocol' },
+    singapore: { label: 'Singapore', flag: '🇸🇬', safetyStd: 'WSH Act / SS 506', focus: 'Risk Assessment / Toolbox Talk' }
 };
 
 const STATUS_OPTIONS = [
-    { value: 'not_started', label: 'NOT STARTED', color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' },
-    { value: 'in_progress', label: 'IN PROGRESS', color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' },
-    { value: 'completed', label: 'COMPLETED', color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' },
-    { value: 'delayed', label: 'DELAYED', color: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' }
+    { value: 'not_started', label: 'NOT STARTED', color: 'bg-slate-100 text-slate-500' },
+    { value: 'in_progress', label: 'IN PROGRESS', color: 'bg-blue-100 text-blue-600' },
+    { value: 'completed', label: 'COMPLETED', color: 'bg-emerald-100 text-emerald-600' },
+    { value: 'delayed', label: 'DELAYED', color: 'bg-red-100 text-red-600' }
 ];
 
 const DailyLogView = () => {
     const [activeTab, setActiveTab] = useState('new');
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
+    const [editingId, setEditingId] = useState(null);
     const [countryOpen, setCountryOpen] = useState(false);
 
-    // Form State
+    // Weather State
+    const [weather, setWeather] = useState({
+        temp: '--', condition: 'Sunny', wind: '--', city: 'Seoul', loading: false
+    });
+    const [weatherSearch, setWeatherSearch] = useState('');
+    const [showCitySearch, setShowCitySearch] = useState(false);
+
+    // Main Form Data
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         country: 'japan',
-        units: 'Metric',
         safetyStd: COUNTRIES.japan.safetyStd,
-        focus: COUNTRIES.japan.focus,
-        safety: {
-            ky_activity: 'Done',
-            morning_exercise: '8:00 AM',
-            vital_signs: 'All staff normal'
-        },
-        manpower: {
-            manager: 2,
-            engineer: 4,
-            skilled_labor: 15,
-            unskilled_labor: 20,
-            painter: 3,
-            electrician: 2,
-            driver: 3,
-            total: 49
-        },
-        tasks: [
-            { id: 1, name: 'Foundation Rebar Installation', startDate: new Date().toISOString().split('T')[0], duration: 10, percent: 65, status: 'in_progress' },
-            { id: 2, name: 'Concrete Pouring - Block A', startDate: new Date().toISOString().split('T')[0], duration: 5, percent: 100, status: 'completed' }
+        safety: { ky_activity: 'Done', morning_exercise: '8:00 AM', vital_signs: 'All staff normal' },
+
+        // Staffing: Array for dynamic addition
+        manpower: [
+            { id: 1, role: 'Manager', count: 2 },
+            { id: 2, role: 'Engineer', count: 4 },
+            { id: 3, role: 'Skilled Labor', count: 15 },
+            { id: 4, role: 'Unskilled Labor', count: 20 },
         ],
-        equipment: {
-            list: [
-                { name: 'Boom Lift', status: 'Pre-op check OK' },
-                { name: 'Welding Machine', status: 'Safety tag valid' }
-            ]
-        },
-        targets: {
-            total_days: 120,
-            current_day: 65,
-            target_desc: 'Floor 2 welding 80%',
-            actual_desc: '85% Completed (Ahead)'
-        },
+
+        // Tasks: with Start/End date
+        tasks: [
+            { id: 1, name: 'Foundation Rebar', startDate: new Date().toISOString().split('T')[0], endDate: new Date(Date.now() + 86400000 * 10).toISOString().split('T')[0], percent: 0, status: 'in_progress' }
+        ],
+
+        // Equipment: with count
+        equipment: [
+            { id: 1, name: 'Boom Lift', count: 2, status: 'Active' },
+            { id: 2, name: 'Welding Machine', count: 5, status: 'Checked' }
+        ],
+
+        targets: { total_days: 100, current_day: 45 },
         fieldNotes: '',
         signature: ''
     });
 
-    const [weather, setWeather] = useState({ temp: '--', condition: 'Sunny', hum: '--', wind: '--', city: 'Seoul' });
-    const CITIES = ['Seoul', 'Tokyo', 'New York', 'London', 'Dubai', 'Ho Chi Minh', 'Singapore'];
-
+    // --- Init & History ---
     useEffect(() => {
-        // Mock Weather Fetch or Real API
-        const fetchWeather = async () => {
-            try {
-                // Using Open-Meteo (Free, No Key)
-                const cityCoords = {
-                    'Seoul': { lat: 37.5665, lon: 126.9780 },
-                    'Tokyo': { lat: 35.6762, lon: 139.6503 },
-                    'New York': { lat: 40.7128, lon: -74.0060 },
-                    'London': { lat: 51.5074, lon: -0.1278 },
-                    'Dubai': { lat: 25.2048, lon: 55.2708 },
-                    'Ho Chi Minh': { lat: 10.8231, lon: 106.6297 },
-                    'Singapore': { lat: 1.3521, lon: 103.8198 }
-                };
-                const coords = cityCoords[weather.city] || cityCoords['Seoul'];
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current_weather=true`);
-                const data = await res.json();
+        loadHistory();
+    }, []);
 
-                setWeather(prev => ({
-                    ...prev,
-                    temp: data.current_weather.temperature,
-                    condition: getWxCondition(data.current_weather.weathercode),
-                    wind: data.current_weather.windspeed
-                }));
-            } catch (e) {
-                console.log('Weather fetch error', e);
+    const loadHistory = () => {
+        const saved = localStorage.getItem('daily_logs');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            setHistory(parsed);
+        }
+    };
+
+    // Initialize New Log (Cumulative logic)
+    const handleNewLog = () => {
+        setEditingId(null);
+        setActiveTab('new');
+
+        // Load latest log or default
+        const latest = history[0];
+        if (latest) {
+            setFormData({
+                ...latest.content,
+                date: new Date().toISOString().split('T')[0], // Reset date to today
+                tasks: latest.content.tasks.map(t => ({ ...t })), // Copy tasks
+                // Cumulative Day
+                targets: {
+                    ...latest.content.targets,
+                    current_day: (parseInt(latest.content.targets.current_day) || 0) + 1
+                },
+                fieldNotes: '',
+                signature: ''
+            });
+            // Recalculate task % based on new date
+        } else {
+            // Reset to defaults if no history
+            // (Keep initial state defined above)
+        }
+    };
+
+    // --- Weather Logic (Google-style Search) ---
+    const searchCity = async (e) => {
+        e.preventDefault();
+        if (!weatherSearch) return;
+        setWeather(prev => ({ ...prev, loading: true }));
+
+        try {
+            // 1. Geocoding
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${weatherSearch}&count=1&language=en&format=json`);
+            const geoData = await geoRes.json();
+
+            if (!geoData.results || geoData.results.length === 0) {
+                alert('City not found');
+                setWeather(prev => ({ ...prev, loading: false }));
+                return;
             }
-        };
-        fetchWeather();
-    }, [weather.city]);
+
+            const { latitude, longitude, name, country } = geoData.results[0];
+
+            // 2. Weather
+            const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const wxData = await wxRes.json();
+
+            setWeather({
+                temp: wxData.current_weather.temperature,
+                condition: getWxCondition(wxData.current_weather.weathercode),
+                wind: wxData.current_weather.windspeed,
+                city: `${name}, ${country}`,
+                loading: false
+            });
+            setShowCitySearch(false);
+            setWeatherSearch('');
+        } catch (err) {
+            console.error(err);
+            setWeather(prev => ({ ...prev, loading: false }));
+        }
+    };
 
     const getWxCondition = (code) => {
         if (code === 0) return 'Sunny';
@@ -152,336 +154,265 @@ const DailyLogView = () => {
         return 'Stormy';
     };
 
-    useEffect(() => {
-        fetchHistory();
-    }, []);
+    // --- Task Logic ---
+    const calculateTaskProgress = (task) => {
+        if (!task.startDate || !task.endDate) return task.percent;
 
-    // Auto-calculate task % based on day ratio when current_day changes
-    const autoFillPercent = () => {
-        const { total_days, current_day } = formData.targets;
-        if (total_days <= 0) return;
-        const ratio = Math.min((current_day / total_days) * 100, 100);
+        const start = new Date(task.startDate);
+        const end = new Date(task.endDate);
+        const today = new Date(formData.date);
+
+        const totalDuration = (end - start) / (1000 * 60 * 60 * 24);
+        const elapsed = (today - start) / (1000 * 60 * 60 * 24);
+
+        if (totalDuration <= 0) return 100;
+
+        let p = Math.round((elapsed / totalDuration) * 100);
+        return Math.max(0, Math.min(100, p));
+    };
+
+    const autoFillTaskPercent = () => {
         const updatedTasks = formData.tasks.map(t => {
-            if (t.status === 'completed') return t;
-            const newPercent = Math.min(Math.round(ratio), 100);
+            const newPercent = calculateTaskProgress(t);
             return {
                 ...t,
                 percent: newPercent,
-                status: newPercent >= 100 ? 'completed' : t.status === 'not_started' && newPercent > 0 ? 'in_progress' : t.status
+                status: newPercent >= 100 ? 'completed' : (newPercent > 0 ? 'in_progress' : 'not_started')
             };
         });
         setFormData(prev => ({ ...prev, tasks: updatedTasks }));
     };
 
-    const handleCountryChange = (code) => {
-        const c = COUNTRIES[code];
-        setFormData(prev => ({
-            ...prev,
-            country: code,
-            safetyStd: c.safetyStd,
-            focus: c.focus
-        }));
-        setCountryOpen(false);
-    };
-
-    const addTask = () => {
-        const newId = Date.now();
-        setFormData(prev => ({
-            ...prev,
-            tasks: [...prev.tasks, { id: newId, name: '', startDate: formData.date, duration: 7, percent: 0, status: 'not_started' }]
-        }));
-    };
-
-    const removeTask = (id) => {
-        setFormData(prev => ({
-            ...prev,
-            tasks: prev.tasks.filter(t => t.id !== id)
-        }));
-    };
-
-    const updateTask = (id, field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            tasks: prev.tasks.map(t => {
-                if (t.id !== id) return t;
-                const updated = { ...t, [field]: value };
-                // Auto-set status based on percent
-                if (field === 'percent') {
-                    const p = parseInt(value) || 0;
-                    updated.percent = Math.max(0, Math.min(100, p));
-                    if (updated.percent >= 100) updated.status = 'completed';
-                    else if (updated.percent > 0 && updated.status === 'not_started') updated.status = 'in_progress';
-                }
-                if (field === 'status' && value === 'completed') updated.percent = 100;
-                return updated;
-            })
-        }));
-    };
-
-    const fetchHistory = () => {
-        try {
-            const saved = localStorage.getItem('daily_logs');
-            if (saved) {
-                const parsedHistory = JSON.parse(saved);
-                setHistory(parsedHistory);
-
-                // Pre-fill Cumulative Data from Last Log
-                if (parsedHistory.length > 0 && activeTab === 'new') {
-                    const lastLog = parsedHistory[0];
-                    if (lastLog.total_days && lastLog.current_day) {
-                        setFormData(prev => ({
-                            ...prev,
-                            targets: {
-                                ...prev.targets,
-                                total_days: lastLog.total_days,
-                                current_day: parseInt(lastLog.current_day) + 1
-                            }
-                        }));
-                    }
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
+    // --- Action Handlers ---
     const handleSave = () => {
         setLoading(true);
         try {
             const newEntry = {
-                id: Date.now(),
+                id: editingId || Date.now(),
                 date: formData.date,
                 content: formData,
                 total_days: formData.targets.total_days,
                 current_day: formData.targets.current_day
             };
-            const existing = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-            const updated = [newEntry, ...existing];
-            localStorage.setItem('daily_logs', JSON.stringify(updated));
 
-            alert('Daily Log Saved!');
-            setHistory(updated);
+            let updatedHistory;
+            if (editingId) {
+                updatedHistory = history.map(h => h.id === editingId ? newEntry : h);
+            } else {
+                updatedHistory = [newEntry, ...history];
+            }
+
+            localStorage.setItem('daily_logs', JSON.stringify(updatedHistory));
+            setHistory(updatedHistory);
             setActiveTab('history');
-        } catch (err) {
-            console.error(err);
-            alert('Error saving log.');
+            setEditingId(null);
+            alert('Log saved successfully!');
+        } catch (e) {
+            console.error(e);
+            alert('Error saving log');
         } finally {
             setLoading(false);
         }
     };
 
-    const currentCountry = COUNTRIES[formData.country] || COUNTRIES.japan;
-    const completionRate = formData.targets.total_days > 0 ? Math.round((formData.targets.current_day / formData.targets.total_days) * 100) : 0;
-    const avgTaskPercent = formData.tasks.length > 0 ? Math.round(formData.tasks.reduce((sum, t) => sum + t.percent, 0) / formData.tasks.length) : 0;
+    const deleteLog = (id, e) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this log?")) return;
+        const filtered = history.filter(h => h.id !== id);
+        setHistory(filtered);
+        localStorage.setItem('daily_logs', JSON.stringify(filtered));
+    };
+
+    const editLog = (item) => {
+        setFormData(item.content);
+        setEditingId(item.id);
+        setActiveTab('new');
+    };
+
+    // Helpers for Staffing/Equipment
+    const addStaffRow = () => setFormData(prev => ({
+        ...prev, manpower: [...prev.manpower, { id: Date.now(), role: '', count: 0 }]
+    }));
+    const removeStaffRow = (id) => setFormData(prev => ({
+        ...prev, manpower: prev.manpower.filter(m => m.id !== id)
+    }));
+
+    const addEquipRow = () => setFormData(prev => ({
+        ...prev, equipment: [...prev.equipment, { id: Date.now(), name: '', count: 1, status: 'Active' }]
+    }));
+    const removeEquipRow = (id) => setFormData(prev => ({
+        ...prev, equipment: prev.equipment.filter(e => e.id !== id)
+    }));
+
+    const totalStaff = formData.manpower.reduce((sum, m) => sum + (parseInt(m.count) || 0), 0);
+    const calculatedProgress = formData.targets.total_days > 0
+        ? Math.round((formData.targets.current_day / formData.targets.total_days) * 100)
+        : 0;
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 dark:text-white flex items-center gap-4">
+                    <h2 className="text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <History className="text-blue-500" /> Daily Technical Log
                     </h2>
-                    <p className="text-slate-500 font-medium mt-2">Record on-site activities, equipment usage, and progress.</p>
+                    <p className="text-slate-500 font-bold mt-1 ml-1">{editingId ? 'EDITING MODE' : 'CREATE NEW REPORT'}</p>
                 </div>
-
-                <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl shadow-inner">
-                    <button
-                        onClick={() => setActiveTab('new')}
-                        className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'new' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md scale-105' : 'text-slate-500'}`}
-                    >
-                        NEW LOG
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md scale-105' : 'text-slate-500'}`}
-                    >
-                        HISTORY
-                    </button>
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
+                    <button onClick={handleNewLog} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'new' ? 'bg-white shadow text-blue-600' : 'text-slate-500'}`}>NEW LOG</button>
+                    <button onClick={() => setActiveTab('history')} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'history' ? 'bg-white shadow text-blue-600' : 'text-slate-500'}`}>HISTORY</button>
                 </div>
             </div>
 
             {activeTab === 'new' ? (
                 <>
-                    {/* ═══════ TOP INFO BAR ═══════ */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 1. Top Bar */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Date */}
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0">
-                                <Calendar size={22} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Log Date</div>
-                                <input
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                    className="font-bold text-lg bg-transparent border-none focus:ring-0 p-0 w-full dark:text-white"
-                                />
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+                            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
+                            <div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase">Log Date</div>
+                                <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="font-bold text-lg bg-transparent border-none p-0 focus:ring-0 dark:text-white" />
                             </div>
                         </div>
 
-                        {/* Country Selector */}
-                        <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Country / Standard</div>
-                            <button
-                                onClick={() => setCountryOpen(!countryOpen)}
-                                className="flex items-center gap-3 w-full text-left group"
-                            >
-                                <span className="text-3xl leading-none">{currentCountry.flag}</span>
-                                <span className="font-bold text-lg dark:text-white flex-1 truncate">{currentCountry.label}</span>
-                                <ChevronDown size={18} className={`text-slate-400 transition-transform ${countryOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Dropdown */}
+                        {/* Country */}
+                        <div className="relative bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm cursor-pointer" onClick={() => setCountryOpen(!countryOpen)}>
+                            <div className="text-[10px] font-black text-slate-400 uppercase">Country standard</div>
+                            <div className="flex items-center gap-3 mt-1">
+                                <span className="text-2xl">{COUNTRIES[formData.country]?.flag}</span>
+                                <span className="font-bold text-lg dark:text-white">{COUNTRIES[formData.country]?.label}</span>
+                                <ChevronDown size={16} className="ml-auto text-slate-400" />
+                            </div>
                             {countryOpen && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {Object.entries(COUNTRIES).map(([code, c]) => (
-                                        <button
-                                            key={code}
-                                            onClick={() => handleCountryChange(code)}
-                                            className={`flex items-center gap-3 w-full px-5 py-3.5 text-left hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${formData.country === code ? 'bg-blue-50 dark:bg-slate-700' : ''}`}
-                                        >
-                                            <span className="text-2xl">{c.flag}</span>
-                                            <div className="flex-1">
-                                                <div className="font-bold dark:text-white">{c.label}</div>
-                                                <div className="text-[10px] text-slate-400 font-medium">{c.safetyStd}</div>
-                                            </div>
-                                            {formData.country === code && <CheckCircle2 size={18} className="text-blue-500" />}
-                                        </button>
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden border border-slate-100">
+                                    {Object.entries(COUNTRIES).map(([k, v]) => (
+                                        <div key={k} onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, country: k, safetyStd: v.safetyStd }); setCountryOpen(false); }} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-3 cursor-pointer">
+                                            <span className="text-xl">{v.flag}</span>
+                                            <span className="text-sm font-bold dark:text-white">{v.label}</span>
+                                        </div>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Weather Widget */}
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative group">
+                        {/* Weather Search */}
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative">
                             <div className="absolute top-3 right-3">
-                                <select
-                                    value={weather.city}
-                                    onChange={(e) => setWeather({ ...weather, city: e.target.value })}
-                                    className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 rounded-lg border-none py-1 px-2 cursor-pointer dark:text-white focus:ring-0"
-                                >
-                                    {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <button onClick={() => setShowCitySearch(!showCitySearch)} className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 transition-colors">
+                                    {showCitySearch ? <X size={14} /> : <Search size={14} />}
+                                </button>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 shrink-0">
-                                    {weather.condition.includes('Rain') ? <Droplets size={22} /> : weather.condition.includes('Cloud') ? <Cloud size={22} /> : <Sun size={22} />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{weather.city}</div>
-                                    <div className="font-bold text-lg dark:text-white flex items-center gap-2 whitespace-nowrap">
-                                        {weather.temp}°C <span className="text-xs font-normal text-slate-400 hidden xl:inline">({weather.condition})</span>
+                            {showCitySearch ? (
+                                <form onSubmit={searchCity} className="flex gap-2 mt-2">
+                                    <input
+                                        autoFocus
+                                        placeholder="Enter city..."
+                                        value={weatherSearch}
+                                        onChange={e => setWeatherSearch(e.target.value)}
+                                        className="w-full text-sm bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </form>
+                            ) : (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500">
+                                        {weather.loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent" /> : <Sun size={20} />}
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">{weather.city}</div>
+                                        <div className="font-bold text-lg dark:text-white flex items-center gap-2">
+                                            {weather.temp}°C
+                                            <span className="text-xs font-medium text-slate-400">({weather.condition})</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Total Personnel */}
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shrink-0">
-                                <Users size={22} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Personnel</div>
-                                <div className="font-bold text-lg dark:text-white">{formData.manpower.total} Pax</div>
+                        {/* Total Staff */}
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+                            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-500"><Users size={20} /></div>
+                            <div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase">Total Personnel</div>
+                                <div className="font-bold text-lg dark:text-white">{totalStaff} Pax</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* ═══════ MAIN CONTENT GRID ═══════ */}
+                    {/* 2. Main Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* LEFT: Main Form Area (2 cols) */}
-                        <div className="lg:col-span-2 space-y-6">
 
-                            {/* ── TASK SUMMARY with progress bars ── */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                <div className="flex justify-between items-center px-7 py-5 border-b border-slate-100 dark:border-slate-800">
-                                    <div className="flex items-center gap-3">
-                                        <HardHat size={20} className="text-blue-500" />
-                                        <h3 className="font-black text-sm dark:text-white">Today's Task Summary</h3>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={autoFillPercent}
-                                            title="Auto-fill % based on days elapsed"
-                                            className="text-[10px] font-black text-slate-400 uppercase px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-500 dark:hover:bg-blue-900/30 transition-colors"
-                                        >
-                                            Auto %
-                                        </button>
-                                        <button
-                                            onClick={addTask}
-                                            className="text-xs font-black text-blue-500 hover:text-blue-700 flex items-center gap-1 transition-colors"
-                                        >
-                                            <Plus size={16} /> New Task
-                                        </button>
+                        {/* LEFT COL: Tasks & Safety */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Task Summary */}
+                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="flex items-center gap-2 font-black text-sm dark:text-white">
+                                        <HardHat size={18} className="text-blue-500" /> Today's Task Summary
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <button onClick={autoFillTaskPercent} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg text-[10px] font-black uppercase hover:bg-blue-100">Auto Calc %</button>
+                                        <button onClick={() => setFormData(p => ({ ...p, tasks: [...p.tasks, { id: Date.now(), name: '', startDate: p.date, endDate: p.date, percent: 0, status: 'not_started' }] }))} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-slate-200"><Plus size={12} /> Add</button>
                                     </div>
                                 </div>
 
-                                <div className="p-7 space-y-5">
-                                    {formData.tasks.length === 0 && (
-                                        <div className="py-10 text-center text-slate-400 font-medium text-sm">
-                                            No tasks yet. Click "+ New Task" to add one.
-                                        </div>
-                                    )}
-
-                                    {formData.tasks.map((task) => {
-                                        const statusObj = STATUS_OPTIONS.find(s => s.value === task.status) || STATUS_OPTIONS[0];
-                                        const barColor = task.status === 'completed'
-                                            ? 'bg-emerald-500'
-                                            : task.status === 'delayed'
-                                                ? 'bg-red-500'
-                                                : 'bg-blue-500';
-
-                                        // Calculate Expected Progress
-                                        const start = new Date(task.startDate);
-                                        const cur = new Date(formData.date);
-                                        const diff = Math.ceil((cur - start) / (1000 * 60 * 60 * 24));
-                                        const expected = task.duration > 0 ? Math.min(100, Math.max(0, Math.round((diff / task.duration) * 100))) : 0;
+                                <div className="space-y-4">
+                                    {formData.tasks.map((task, idx) => {
+                                        const totalDays = Math.ceil((new Date(task.endDate) - new Date(task.startDate)) / (1000 * 3600 * 24));
+                                        const elapsed = Math.ceil((new Date(formData.date) - new Date(task.startDate)) / (1000 * 3600 * 24));
 
                                         return (
-                                            <div key={task.id} className="group p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
-                                                <div className="flex flex-col gap-3">
-                                                    {/* Top Row: Name & Delete */}
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            value={task.name}
-                                                            onChange={e => updateTask(task.id, 'name', e.target.value)}
-                                                            placeholder="Task Name"
-                                                            className="flex-1 font-bold text-sm bg-transparent border-none p-0 focus:ring-0 dark:text-white placeholder:text-slate-400"
-                                                        />
-                                                        <button onClick={() => removeTask(task.id)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                    </div>
+                                            <div key={task.id} className="group p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl hover:bg-slate-100 transition-colors">
+                                                <div className="flex gap-3 mb-3">
+                                                    <input
+                                                        placeholder="Task Name"
+                                                        value={task.name}
+                                                        onChange={e => {
+                                                            const t = [...formData.tasks];
+                                                            t[idx].name = e.target.value;
+                                                            setFormData({ ...formData, tasks: t });
+                                                        }}
+                                                        className="flex-1 bg-transparent border-none p-0 font-bold text-sm focus:ring-0 dark:text-white"
+                                                    />
+                                                    <button onClick={() => setFormData(p => ({ ...p, tasks: p.tasks.filter(t => t.id !== task.id) }))} className="text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
+                                                </div>
 
-                                                    {/* Date & Duration Inputs */}
-                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 font-medium">
-                                                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                            <span className="text-[10px] uppercase font-black text-slate-400">Start</span>
-                                                            <input type="date" value={task.startDate} onChange={e => updateTask(task.id, 'startDate', e.target.value)} className="bg-transparent border-none p-0 w-24 text-xs font-bold dark:text-slate-300" />
-                                                        </div>
-                                                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                            <span className="text-[10px] uppercase font-black text-slate-400">Days</span>
-                                                            <input type="number" value={task.duration} onChange={e => updateTask(task.id, 'duration', e.target.value)} className="bg-transparent border-none p-0 w-8 text-center text-xs font-bold dark:text-slate-300" />
-                                                        </div>
-                                                        <div className="ml-auto text-blue-500 font-black text-[10px] uppercase bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
-                                                            Exp: {expected}%
-                                                        </div>
+                                                {/* Date Logic */}
+                                                <div className="flex flex-wrap items-center gap-3 text-xs mb-3">
+                                                    <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-slate-400">START</span>
+                                                        <input type="date" value={task.startDate} onChange={e => {
+                                                            const t = [...formData.tasks]; t[idx].startDate = e.target.value; setFormData({ ...formData, tasks: t });
+                                                        }} className="bg-transparent border-none p-0 font-bold w-24" />
                                                     </div>
+                                                    <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-slate-400">DONE</span>
+                                                        <input type="date" value={task.endDate} onChange={e => {
+                                                            const t = [...formData.tasks]; t[idx].endDate = e.target.value; setFormData({ ...formData, tasks: t });
+                                                        }} className="bg-transparent border-none p-0 font-bold w-24" />
+                                                    </div>
+                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                        (Day {elapsed > 0 ? elapsed : 0} of {totalDays > 0 ? totalDays : 1})
+                                                    </span>
+                                                </div>
 
-                                                    {/* Progress & Status */}
-                                                    <div className="flex items-center gap-3 mt-1">
-                                                        <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner relative">
-                                                            <div className={`h-full ${barColor} rounded-full transition-all duration-500 ease-out relative z-10`} style={{ width: `${task.percent}%` }} />
-                                                            {/* Expected Marker */}
-                                                            <div className="absolute top-0 bottom-0 w-1 bg-slate-400/50 z-20" style={{ left: `${expected}%` }} title={`Expected: ${expected}%`} />
-                                                        </div>
-                                                        <input type="number" value={task.percent} onChange={e => updateTask(task.id, 'percent', e.target.value)} className="w-10 text-right text-xs font-black bg-transparent border-none p-0 dark:text-white" />
-                                                        <span className="text-xs font-bold text-slate-400">%</span>
-                                                        <select value={task.status} onChange={e => updateTask(task.id, 'status', e.target.value)} className={`text-[10px] uppercase font-black rounded-lg py-1 px-2 border-none cursor-pointer ${statusObj.color}`}>
-                                                            {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                                                        </select>
+                                                {/* Progress Bar */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden relative">
+                                                        <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${task.percent}%` }} />
                                                     </div>
+                                                    <input
+                                                        type="number"
+                                                        value={task.percent}
+                                                        min="0" max="100"
+                                                        onChange={e => {
+                                                            const t = [...formData.tasks]; t[idx].percent = parseInt(e.target.value) || 0; setFormData({ ...formData, tasks: t });
+                                                        }}
+                                                        className="w-12 text-right bg-transparent border-none p-0 font-black text-sm"
+                                                    />
+                                                    <span className="text-xs font-bold text-slate-400">%</span>
                                                 </div>
                                             </div>
                                         );
@@ -489,297 +420,168 @@ const DailyLogView = () => {
                                 </div>
                             </div>
 
-                            {/* ── SAFETY & DAILY FIELD NOTES (side by side) ── */}
+                            {/* Safety & Notes */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Safety Section */}
-                                <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                    <div className="flex items-center gap-3 px-7 py-5 border-b border-slate-100 dark:border-slate-800">
-                                        <AlertTriangle size={18} className="text-amber-500" />
-                                        <h3 className="font-black text-sm dark:text-white">Safety (KY/TBM)</h3>
-                                    </div>
-                                    <div className="p-7 space-y-3">
-                                        {Object.entries(formData.safety).map(([key, val]) => (
-                                            <div key={key} className="flex gap-2 text-sm items-center">
-                                                <span className="text-slate-300">•</span>
-                                                <span className="font-bold text-slate-500 dark:text-slate-400 min-w-[110px] text-xs uppercase">{key.replace(/_/g, ' ')}:</span>
-                                                <input
-                                                    value={val}
-                                                    onChange={e => {
-                                                        const newS = { ...formData.safety, [key]: e.target.value };
-                                                        setFormData({ ...formData, safety: newS });
-                                                    }}
-                                                    className="flex-1 bg-transparent border-none focus:ring-0 p-0 font-medium text-sm italic dark:text-white"
-                                                />
+                                <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+                                    <h3 className="font-black text-sm mb-4 flex gap-2"><AlertTriangle size={16} className="text-amber-500" /> Safety Check</h3>
+                                    <div className="space-y-3">
+                                        {Object.entries(formData.safety).map(([k, v]) => (
+                                            <div key={k} className="flex flex-col">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase mb-1">{k.replace('_', ' ')}</span>
+                                                <input value={v} onChange={e => setFormData({ ...formData, safety: { ...formData.safety, [k]: e.target.value } })} className="bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-sm font-medium border-none" />
                                             </div>
                                         ))}
-                                        <div className="pt-3 mt-3 border-t border-slate-50 dark:border-slate-800">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Standard</div>
-                                            <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{formData.safetyStd}</div>
-                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Daily Field Notes */}
-                                <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                    <div className="flex items-center gap-3 px-7 py-5 border-b border-slate-100 dark:border-slate-800">
-                                        <Activity size={18} className="text-indigo-500" />
-                                        <h3 className="font-black text-sm dark:text-white">Daily Field Notes</h3>
-                                    </div>
-                                    <div className="p-7">
-                                        <textarea
-                                            value={formData.fieldNotes}
-                                            onChange={e => setFormData({ ...formData, fieldNotes: e.target.value })}
-                                            placeholder="Describe special issues, accidents, or weather delays here..."
-                                            className="w-full min-h-[140px] bg-transparent border-none focus:ring-0 p-0 text-sm font-medium resize-none dark:text-white placeholder:text-slate-300"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ── SIGNATURE ── */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm p-7 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase">Project Manager Signature</label>
-                                    <input
-                                        value={formData.signature}
-                                        onChange={e => setFormData({ ...formData, signature: e.target.value })}
-                                        placeholder="Sign here..."
-                                        className="border-b-2 border-slate-200 dark:border-slate-700 bg-transparent py-1 font-signature text-xl focus:outline-none focus:border-blue-500 w-64 dark:text-white"
+                                <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+                                    <h3 className="font-black text-sm mb-4 flex gap-2"><Activity size={16} className="text-indigo-500" /> Field Notes</h3>
+                                    <textarea
+                                        value={formData.fieldNotes}
+                                        onChange={e => setFormData({ ...formData, fieldNotes: e.target.value })}
+                                        className="w-full h-32 bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm resize-none border-none placeholder:text-slate-400"
+                                        placeholder="Site conditions, incidents, delays..."
                                     />
-                                </div>
-                                <div className="text-right">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Date Signed</label>
-                                    <span className="font-bold text-lg dark:text-white">{formData.date}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* ═══════ RIGHT SIDEBAR ═══════ */}
+                        {/* RIGHT COL: Resources & Stats */}
                         <div className="space-y-6">
-                            {/* Staffing Overview */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-100 dark:border-slate-800">
-                                    <Users size={18} className="text-blue-500" />
-                                    <h4 className="font-black text-sm dark:text-white">Staffing Overview</h4>
+
+                            {/* 3. Manpower (Dynamic Array) */}
+                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-black text-sm dark:text-white flex gap-2"><Users size={16} className="text-emerald-500" /> Staffing</h4>
+                                    <button onClick={addStaffRow} className="text-[10px] font-black bg-slate-100 p-1.5 rounded text-slate-500 hover:bg-slate-200"><Plus size={14} /></button>
                                 </div>
-                                <div className="p-6 space-y-4">
-                                    {Object.entries(formData.manpower).filter(([k]) => k !== 'total').map(([key, val]) => (
-                                        <div key={key} className="flex items-center justify-between">
-                                            <span className="text-sm text-slate-600 dark:text-slate-400 font-medium capitalize">{key.replace(/_/g, ' ')}</span>
+                                <div className="space-y-3">
+                                    {formData.manpower.map((person, idx) => (
+                                        <div key={person.id} className="flex gap-2 items-center">
+                                            <input
+                                                value={person.role}
+                                                placeholder="Role"
+                                                onChange={e => {
+                                                    const m = [...formData.manpower]; m[idx].role = e.target.value; setFormData({ ...formData, manpower: m });
+                                                }}
+                                                className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-xs font-bold border-none"
+                                            />
                                             <input
                                                 type="number"
-                                                min="0"
-                                                value={val}
-                                                onChange={(e) => {
-                                                    const newVal = parseInt(e.target.value) || 0;
-                                                    const newManpower = { ...formData.manpower, [key]: newVal };
-                                                    const total = Object.entries(newManpower)
-                                                        .filter(([k]) => k !== 'total')
-                                                        .reduce((sum, [_, v]) => sum + v, 0);
-                                                    setFormData({ ...formData, manpower: { ...newManpower, total } });
+                                                value={person.count}
+                                                onChange={e => {
+                                                    const m = [...formData.manpower]; m[idx].count = parseInt(e.target.value) || 0; setFormData({ ...formData, manpower: m });
                                                 }}
-                                                className="w-20 text-center font-bold dark:text-white bg-slate-50 dark:bg-slate-800 rounded-lg border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-slate-700 transition-all py-1.5 text-sm"
+                                                className="w-16 bg-slate-50 dark:bg-slate-800 rounded-lg px-2 py-2 text-xs font-black text-center border-none"
                                             />
+                                            <button onClick={() => removeStaffRow(person.id)} className="text-slate-300 hover:text-red-400"><X size={14} /></button>
                                         </div>
                                     ))}
-                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                                        <span className="text-sm font-black text-slate-900 dark:text-white">Total</span>
-                                        <span className="text-lg font-black text-blue-600">{formData.manpower.total}</span>
+                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between font-black text-sm">
+                                        <span>Total</span>
+                                        <span>{totalStaff}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Equipment Log */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
-                                    <div className="flex items-center gap-3">
-                                        <Wrench size={18} className="text-orange-500" />
-                                        <h4 className="font-black text-sm dark:text-white">Equipment Log</h4>
-                                    </div>
-                                    <button
-                                        onClick={() => setFormData(prev => ({
-                                            ...prev,
-                                            equipment: {
-                                                ...prev.equipment,
-                                                list: [...prev.equipment.list, { name: '', status: 'Active' }]
-                                            }
-                                        }))}
-                                        className="text-[10px] font-black text-orange-500 uppercase hover:text-orange-700 transition-colors"
-                                    >
-                                        ADD
-                                    </button>
+                            {/* 4. Equipment (With Count) */}
+                            <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-black text-sm dark:text-white flex gap-2"><Wrench size={16} className="text-orange-500" /> Equipment</h4>
+                                    <button onClick={addEquipRow} className="text-[10px] font-black bg-slate-100 p-1.5 rounded text-slate-500 hover:bg-slate-200"><Plus size={14} /></button>
                                 </div>
-                                <div className="p-6 space-y-3">
-                                    {formData.equipment.list.map((eq, idx) => (
-                                        <div key={idx} className="flex items-center justify-between group">
-                                            <div className="flex-1 min-w-0">
+                                <div className="space-y-3">
+                                    {formData.equipment.map((eq, idx) => (
+                                        <div key={eq.id} className="flex gap-2 items-center">
+                                            <div className="flex-1">
                                                 <input
                                                     value={eq.name}
-                                                    onChange={e => {
-                                                        const list = [...formData.equipment.list];
-                                                        list[idx] = { ...eq, name: e.target.value };
-                                                        setFormData({ ...formData, equipment: { ...formData.equipment, list } });
-                                                    }}
-                                                    placeholder="Equipment name..."
-                                                    className="font-bold text-sm bg-transparent border-none focus:ring-0 p-0 w-full dark:text-white placeholder:text-slate-300"
+                                                    placeholder="Item name"
+                                                    onChange={e => { const q = [...formData.equipment]; q[idx].name = e.target.value; setFormData({ ...formData, equipment: q }); }}
+                                                    className="w-full bg-transparent p-0 text-xs font-bold border-none mb-1"
                                                 />
                                                 <input
                                                     value={eq.status}
-                                                    onChange={e => {
-                                                        const list = [...formData.equipment.list];
-                                                        list[idx] = { ...eq, status: e.target.value };
-                                                        setFormData({ ...formData, equipment: { ...formData.equipment, list } });
-                                                    }}
-                                                    className="text-xs text-emerald-500 font-medium bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                    placeholder="Status"
+                                                    onChange={e => { const q = [...formData.equipment]; q[idx].status = e.target.value; setFormData({ ...formData, equipment: q }); }}
+                                                    className="w-full bg-transparent p-0 text-[10px] text-emerald-500 font-medium border-none"
                                                 />
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    const list = formData.equipment.list.filter((_, i) => i !== idx);
-                                                    setFormData({ ...formData, equipment: { ...formData.equipment, list } });
-                                                }}
-                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-all p-1 ml-2"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <div className="flex items-center gap-1 bg-slate-50 rounded-lg px-2">
+                                                <span className="text-[10px] text-slate-400 font-bold">Qty</span>
+                                                <input
+                                                    type="number"
+                                                    value={eq.count}
+                                                    onChange={e => { const q = [...formData.equipment]; q[idx].count = parseInt(e.target.value) || 0; setFormData({ ...formData, equipment: q }); }}
+                                                    className="w-10 bg-transparent text-center font-black text-xs border-none p-1"
+                                                />
+                                            </div>
+                                            <button onClick={() => removeEquipRow(eq.id)} className="text-slate-300 hover:text-red-400"><X size={14} /></button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Construction Progress Stats */}
-                            <div className="glass p-6 rounded-[32px] border border-blue-100 dark:border-blue-900 shadow-xl bg-blue-50/30 dark:bg-blue-900/10">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <TrendingUp className="text-blue-500" />
-                                    <h4 className="font-black text-sm uppercase tracking-widest text-blue-900 dark:text-blue-300">Construction Stats</h4>
+                            {/* Stats Box */}
+                            <div className="glass p-6 rounded-[32px] border border-blue-100 bg-blue-50/50 shadow-lg">
+                                <h4 className="font-black text-sm uppercase text-blue-900 mb-4 flex gap-2"><TrendingUp size={16} /> Project Stats</h4>
+
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="bg-white p-3 rounded-xl shadow-sm">
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">Day</div>
+                                        <input type="number" value={formData.targets.current_day} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, current_day: e.target.value } })} className="w-full font-black text-xl text-blue-600 border-none p-0" />
+                                    </div>
+                                    <div className="bg-white p-3 rounded-xl shadow-sm">
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">Total</div>
+                                        <input type="number" value={formData.targets.total_days} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, total_days: e.target.value } })} className="w-full font-black text-xl text-slate-700 border-none p-0" />
+                                    </div>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-blue-50 dark:border-blue-900/30">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Period</div>
-                                            <div className="flex items-baseline gap-1">
-                                                <input
-                                                    type="number"
-                                                    value={formData.targets.total_days}
-                                                    onChange={e => setFormData({
-                                                        ...formData,
-                                                        targets: { ...formData.targets, total_days: parseInt(e.target.value) || 0 }
-                                                    })}
-                                                    className="text-2xl font-black bg-transparent w-full focus:outline-none dark:text-white"
-                                                />
-                                                <span className="text-xs font-bold text-slate-400">days</span>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-blue-50 dark:border-blue-900/30">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase mb-1">Current Day</div>
-                                            <div className="flex items-baseline gap-1">
-                                                <input
-                                                    type="number"
-                                                    value={formData.targets.current_day}
-                                                    onChange={e => setFormData({
-                                                        ...formData,
-                                                        targets: { ...formData.targets, current_day: parseInt(e.target.value) || 0 }
-                                                    })}
-                                                    className="text-2xl font-black text-blue-600 w-full focus:outline-none"
-                                                />
-                                                <span className="text-xs font-bold text-slate-400">days</span>
-                                            </div>
-                                        </div>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                                        <span>Overall Progress</span>
+                                        <span>{calculatedProgress}%</span>
                                     </div>
-
-                                    {/* Day Progress Bar */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
-                                            <span>Day Progress</span>
-                                            <span className="text-blue-600 font-black">{completionRate}%</span>
-                                        </div>
-                                        <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden p-1 shadow-inner">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full shadow-lg transition-all duration-1000 ease-out"
-                                                style={{ width: `${Math.min(completionRate, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Task Progress Bar */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
-                                            <span>Avg Task Progress</span>
-                                            <span className="text-emerald-600 font-black">{avgTaskPercent}%</span>
-                                        </div>
-                                        <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden p-1 shadow-inner">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-lg transition-all duration-1000 ease-out"
-                                                style={{ width: `${Math.min(avgTaskPercent, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-900 text-white p-5 rounded-3xl space-y-3">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Auto Summary</div>
-                                        <p className="text-sm font-medium leading-relaxed opacity-90">
-                                            {completionRate >= 80
-                                                ? "Project is in final stages. Conduct pre-completion inspection."
-                                                : completionRate >= 50
-                                                    ? "Project is past midpoint. Verify milestones and workforce scheduling."
-                                                    : "Early-stage progress. Monitor ramp-up and resource allocation."}
-                                        </p>
+                                    <div className="h-3 bg-white rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${calculatedProgress}%` }} />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Save Action */}
-                            <button
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="w-full py-5 bg-blue-600 text-white rounded-[32px] font-black text-lg shadow-2xl shadow-blue-500/40 hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                            >
+                            <button onClick={handleSave} disabled={loading} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all flex justify-center gap-2">
                                 {loading ? <Clock className="animate-spin" /> : <Save />}
-                                {loading ? 'STORING LOG...' : 'SAVE DAILY LOG'}
+                                {editingId ? 'UPDATE LOG' : 'SAVE LOG'}
                             </button>
-
-                            <div className="flex gap-4">
-                                <button className="flex-1 py-4 glass text-slate-600 dark:text-slate-300 rounded-3xl font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-white dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-800 shadow-sm">
-                                    <Target size={16} /> PRINT PDF
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </>
             ) : (
+                // 5. History Tab with Edit/Delete
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {history.length > 0 ? (
-                        history.map((item, idx) => (
-                            <div key={item.id || idx} className="glass group p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 hover:border-blue-500 transition-all cursor-pointer shadow-lg bg-white dark:bg-slate-900">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                                        <Calendar size={22} />
+                    {history.length === 0 ? <div className="col-span-full py-20 text-center text-slate-400 font-black">No logs found.</div> :
+                        history.map((log) => (
+                            <div key={log.id} onClick={() => editLog(log)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 hover:border-blue-500 shadow-sm hover:shadow-lg transition-all cursor-pointer group relative">
+                                <button onClick={(e) => deleteLog(log.id, e)} className="absolute top-4 right-4 p-2 bg-slate-50 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                                    <Trash2 size={16} />
+                                </button>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
+                                    <div>
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">Log Date</div>
+                                        <div className="font-bold text-lg dark:text-white">{log.date}</div>
                                     </div>
-                                    <span className="text-[10px] font-black px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400">#LOG-{item.date.split('-')[1]}-{idx}</span>
                                 </div>
-                                <h4 className="text-lg font-black dark:text-white group-hover:text-blue-500 transition-colors">{item.date}</h4>
-                                <p className="text-slate-500 text-xs font-medium mt-1 mb-6 truncate">
-                                    {item.content?.tasks?.[0]?.name || item.content?.progress?.main_work || 'No description available'}
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                    <div>
-                                        <div className="text-[10px] font-black text-slate-400 uppercase">Manpower</div>
-                                        <div className="text-sm font-bold">{item.content?.manpower?.total || 0} Total</div>
+                                <div className="space-y-2 border-t border-slate-100 pt-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 font-medium">Day Progress</span>
+                                        <span className="font-black text-blue-600">{log.current_day} / {log.total_days}</span>
                                     </div>
-                                    <div>
-                                        <div className="text-[10px] font-black text-slate-400 uppercase">Progress</div>
-                                        <div className="text-sm font-bold text-blue-600">Day {item.current_day} / {item.total_days}</div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 font-medium">Manpower</span>
+                                        <span className="font-bold dark:text-white">{log.content?.manpower?.reduce((s, m) => s + (parseInt(m.count) || 0), 0)} Pax</span>
                                     </div>
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-20 text-center glass rounded-[40px]">
-                            <p className="text-slate-400 font-bold uppercase tracking-widest">No logs found in Supabase</p>
-                        </div>
-                    )}
+                        ))}
                 </div>
             )}
         </div>
