@@ -155,6 +155,25 @@ const DailyLogView = () => {
     };
 
     // --- Task Logic ---
+    // Auto-calc tasks when Date changes
+    useEffect(() => {
+        if (formData.tasks.length > 0) {
+            const updatedTasks = formData.tasks.map(t => {
+                const newPercent = calculateTaskProgress(t);
+                if (t.percent !== newPercent) {
+                    return {
+                        ...t,
+                        percent: newPercent,
+                        status: newPercent >= 100 ? 'completed' : (newPercent > 0 ? 'in_progress' : 'not_started')
+                    };
+                }
+                return t;
+            });
+            if (JSON.stringify(updatedTasks) !== JSON.stringify(formData.tasks)) {
+                setFormData(prev => ({ ...prev, tasks: updatedTasks }));
+            }
+        }
+    }, [formData.date]);
     const calculateTaskProgress = (task) => {
         if (!task.startDate || !task.endDate) return task.percent;
 
@@ -185,34 +204,44 @@ const DailyLogView = () => {
 
     // --- Action Handlers ---
     const handleSave = () => {
-        setLoading(true);
-        try {
-            const newEntry = {
-                id: editingId || Date.now(),
-                date: formData.date,
-                content: formData,
-                total_days: formData.targets.total_days,
-                current_day: formData.targets.current_day
-            };
-
-            let updatedHistory;
-            if (editingId) {
-                updatedHistory = history.map(h => h.id === editingId ? newEntry : h);
-            } else {
-                updatedHistory = [newEntry, ...history];
-            }
-
-            localStorage.setItem('daily_logs', JSON.stringify(updatedHistory));
-            setHistory(updatedHistory);
-            setActiveTab('history');
-            setEditingId(null);
-            alert('Log saved successfully!');
-        } catch (e) {
-            console.error(e);
-            alert('Error saving log');
-        } finally {
-            setLoading(false);
+        if (!formData.date) {
+            alert('Please select a date');
+            return;
         }
+        setLoading(true);
+        // Small delay to ensure UI loading state is visible
+        setTimeout(() => {
+            try {
+                const newEntry = {
+                    id: editingId || Date.now(),
+                    date: formData.date,
+                    content: { ...formData }, // Deep copy
+                    total_days: formData.targets.total_days,
+                    current_day: formData.targets.current_day
+                };
+
+                // Get fresh history
+                const currentHistory = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+                let updatedHistory;
+
+                if (editingId) {
+                    updatedHistory = currentHistory.map(h => h.id === editingId ? newEntry : h);
+                } else {
+                    updatedHistory = [newEntry, ...currentHistory];
+                }
+
+                localStorage.setItem('daily_logs', JSON.stringify(updatedHistory));
+                setHistory(updatedHistory);
+                setEditingId(null);
+                setActiveTab('history');
+                alert('Log saved successfully!');
+            } catch (e) {
+                console.error(e);
+                alert('Error saving log');
+            } finally {
+                setLoading(false);
+            }
+        }, 100);
     };
 
     const deleteLog = (id, e) => {
@@ -306,15 +335,17 @@ const DailyLogView = () => {
                                 </button>
                             </div>
                             {showCitySearch ? (
-                                <form onSubmit={searchCity} className="flex gap-2 mt-2">
+                                <div className="flex gap-2 mt-2">
                                     <input
                                         autoFocus
                                         placeholder="Enter city..."
                                         value={weatherSearch}
                                         onChange={e => setWeatherSearch(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && searchCity(e)}
                                         className="w-full text-sm bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-blue-500"
                                     />
-                                </form>
+                                    <button onClick={searchCity} className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-600 whitespace-nowrap">Check</button>
+                                </div>
                             ) : (
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500">
