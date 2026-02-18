@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
-const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
+const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleNavClick = (view) => {
@@ -33,6 +33,9 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
             onBack();
         }
     };
+
+    const isAdmin = user?.email === 'lsmith5695@gmail.com';
+    const displayName = user?.user_metadata?.full_name || 'Architect';
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans overflow-x-hidden">
@@ -121,11 +124,17 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
                         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 lg:mx-2" />
                         <div className="flex items-center gap-3 pl-2 group cursor-pointer">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-black dark:text-white group-hover:text-blue-500 transition-colors">Jay Admin</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">Admin</p>
+                                <p className="text-sm font-black dark:text-white group-hover:text-blue-500 transition-colors">{displayName}</p>
+                                {isAdmin && (
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">Admin</p>
+                                )}
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 group-hover:border-blue-500 transition-all">
-                                <User size={24} className="text-slate-400" />
+                                {user?.user_metadata?.avatar_url ? (
+                                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User size={24} className="text-slate-400" />
+                                )}
                             </div>
                         </div>
                     </div>

@@ -98,8 +98,9 @@ function App() {
         activeNav={view === 'dashboard' ? 'overview' : view}
         onNav={setView}
         onLogout={handleLogout}
+        user={session?.user}
       >
-        {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} /> : null}
+        {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} user={session?.user} /> : null}
         {view === 'excel' ? <ExcelSplitter /> : null}
         {view === 'pdf' ? <PDFComparer /> : null}
         {view === 'daily' ? <DailyLogView /> : null}

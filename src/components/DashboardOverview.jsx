@@ -11,12 +11,14 @@ import {
     History
 } from 'lucide-react';
 
-const DashboardOverview = ({ onNav }) => {
+const DashboardOverview = ({ onNav, user }) => {
+    const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Architect';
+
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Greeting */}
             <div>
-                <h2 className="text-3xl font-black dark:text-white tracking-tight">Welcome back, Jay 👋</h2>
+                <h2 className="text-3xl font-black dark:text-white tracking-tight">Welcome, {firstName} 👋</h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Here's what's happening with your architecture sub-tools today.</p>
             </div>
 
@@ -25,26 +27,26 @@ const DashboardOverview = ({ onNav }) => {
                 <StatCard
                     icon={<FileSpreadsheet className="text-blue-500" />}
                     label="Files Processed"
-                    value="128"
-                    trend="+12%"
+                    value="0"
+                    trend="-"
                 />
                 <StatCard
                     icon={<TrendingUp className="text-emerald-500" />}
                     label="Lines Split"
-                    value="42,500"
-                    trend="+8.4%"
+                    value="0"
+                    trend="-"
                 />
                 <StatCard
                     icon={<Layers className="text-indigo-500" />}
                     label="PDF Comps"
-                    value="15"
-                    trend="+2"
+                    value="0"
+                    trend="-"
                 />
                 <StatCard
                     icon={<Zap className="text-amber-500" />}
                     label="Time Saved"
-                    value="12.5h"
-                    trend="+1.2h"
+                    value="0h"
+                    trend="-"
                 />
             </div>
 
@@ -90,24 +92,15 @@ const DashboardOverview = ({ onNav }) => {
                 {/* Recent Activity */}
                 <div className="space-y-6">
                     <h3 className="text-xl font-black dark:text-white">Recent Activity</h3>
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 space-y-6">
-                        <ActivityItem
-                            title="Split: BOM_Structure.xlsx"
-                            time="2 hours ago"
-                            type="Excel"
-                        />
-                        <ActivityItem
-                            title="Compared: Page 12 vs 13"
-                            time="5 hours ago"
-                            type="PDF"
-                        />
-                        <ActivityItem
-                            title="Exported: 24 Sub-files"
-                            time="Yesterday"
-                            type="System"
-                        />
-                        <button className="w-full py-3 text-sm font-bold text-slate-500 hover:text-blue-500 transition-colors">
-                            View all logs
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 text-center">
+                        <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <History className="text-slate-300 dark:text-slate-600" />
+                        </div>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold mb-1">No recent activity</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Start your first task to see logs here.</p>
+
+                        <button onClick={() => onNav('excel')} className="text-sm font-black text-blue-500 hover:text-blue-600 transition-colors">
+                            Start First Task &rarr;
                         </button>
                     </div>
                 </div>
