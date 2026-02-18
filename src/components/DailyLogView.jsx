@@ -5,7 +5,7 @@ import {
     Target, Save, History, Search,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
     Plus, Trash2, ChevronDown, Wrench,
-    Cloud, Sun, MapPin, Droplets, Wind, Edit3, X
+    Cloud, Sun, CloudRain, CloudFog, CloudLightning, CloudSun, MapPin, Droplets, Wind, Edit3, X
 } from 'lucide-react';
 
 const COUNTRIES = {
@@ -336,6 +336,19 @@ const DailyLogView = ({ user }) => {
         ? Math.round((formData.targets.current_day / formData.targets.total_days) * 100)
         : 0;
 
+    const getWeatherDisplay = () => {
+        const { condition, loading } = weather;
+        if (loading) return { icon: <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent" />, bg: 'bg-orange-50 dark:bg-orange-900/30' };
+
+        switch (condition) {
+            case 'Rainy': return { icon: <CloudRain size={20} className="text-blue-500" />, bg: 'bg-blue-50 dark:bg-blue-900/30' };
+            case 'Stormy': return { icon: <CloudLightning size={20} className="text-purple-500" />, bg: 'bg-purple-50 dark:bg-purple-900/30' };
+            case 'Foggy': return { icon: <CloudFog size={20} className="text-slate-500" />, bg: 'bg-slate-100 dark:bg-slate-800' };
+            case 'Partly Cloudy': return { icon: <CloudSun size={20} className="text-yellow-500" />, bg: 'bg-yellow-50 dark:bg-yellow-900/30' };
+            default: return { icon: <Sun size={20} className="text-orange-500" />, bg: 'bg-orange-50 dark:bg-orange-900/30' };
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header */}
@@ -406,8 +419,8 @@ const DailyLogView = ({ user }) => {
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-500">
-                                        {weather.loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent" /> : <Sun size={20} />}
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${getWeatherDisplay().bg}`}>
+                                        {getWeatherDisplay().icon}
                                     </div>
                                     <div>
                                         <div className="text-[10px] font-black text-slate-400 uppercase">{weather.city}</div>
