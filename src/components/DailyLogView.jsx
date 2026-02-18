@@ -63,7 +63,10 @@ const DailyLogView = () => {
             { id: 2, name: 'Welding Machine', count: 5, status: 'Checked' }
         ],
 
-        targets: { total_days: 100, current_day: 45 },
+        targets: {
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0]
+        },
         fieldNotes: '',
         signature: ''
     });
@@ -74,10 +77,19 @@ const DailyLogView = () => {
     }, []);
 
     const loadHistory = () => {
-        const saved = localStorage.getItem('daily_logs');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            setHistory(parsed);
+        try {
+            const saved = localStorage.getItem('daily_logs');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                    setHistory(parsed);
+                } else {
+                    setHistory([]);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load history", e);
+            setHistory([]);
         }
     };
 
@@ -93,18 +105,14 @@ const DailyLogView = () => {
                 ...latest.content,
                 date: new Date().toISOString().split('T')[0], // Reset date to today
                 tasks: latest.content.tasks.map(t => ({ ...t })), // Copy tasks
-                // Cumulative Day
+                // Keep project dates
                 targets: {
-                    ...latest.content.targets,
-                    current_day: (parseInt(latest.content.targets.current_day) || 0) + 1
+                    startDate: latest.content.targets?.startDate || new Date().toISOString().split('T')[0],
+                    endDate: latest.content.targets?.endDate || new Date().toISOString().split('T')[0]
                 },
                 fieldNotes: '',
                 signature: ''
             });
-            // Recalculate task % based on new date
-        } else {
-            // Reset to defaults if no history
-            // (Keep initial state defined above)
         }
     };
 
@@ -212,12 +220,20 @@ const DailyLogView = () => {
         // Small delay to ensure UI loading state is visible
         setTimeout(() => {
             try {
+                // Calc project stats for history
+                const pStart = new Date(formData.targets.startDate || formData.date);
+                const pEnd = new Date(formData.targets.endDate || formData.date);
+                const pToday = new Date(formData.date);
+
+                const totalDays = Math.ceil((pEnd - pStart) / (1000 * 60 * 60 * 24));
+                const currentDay = Math.ceil((pToday - pStart) / (1000 * 60 * 60 * 24));
+
                 const newEntry = {
                     id: editingId || Date.now(),
                     date: formData.date,
                     content: { ...formData }, // Deep copy
-                    total_days: formData.targets.total_days,
-                    current_day: formData.targets.current_day
+                    total_days: Math.max(1, totalDays),
+                    current_day: Math.max(0, currentDay)
                 };
 
                 // Get fresh history
@@ -383,10 +399,7 @@ const DailyLogView = () => {
                                     <h3 className="flex items-center gap-2 font-black text-sm dark:text-white">
                                         <HardHat size={18} className="text-blue-500" /> Today's Task Summary
                                     </h3>
-                                    <div className="flex gap-2">
-                                        <button onClick={autoFillTaskPercent} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg text-[10px] font-black uppercase hover:bg-blue-100">Auto Calc %</button>
-                                        <button onClick={() => setFormData(p => ({ ...p, tasks: [...p.tasks, { id: Date.now(), name: '', startDate: p.date, endDate: p.date, percent: 0, status: 'not_started' }] }))} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-slate-200"><Plus size={12} /> Add</button>
-                                    </div>
+                                    <button onClick={() => setFormData(p => ({ ...p, tasks: [...p.tasks, { id: Date.now(), name: '', startDate: p.date, endDate: p.date, percent: 0, status: 'not_started' }] }))} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-slate-200"><Plus size={12} /> Add</button>
                                 </div>
 
                                 <div className="space-y-4">
@@ -415,13 +428,29 @@ const DailyLogView = () => {
                                                     <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2">
                                                         <span className="text-[10px] font-black text-slate-400">START</span>
                                                         <input type="date" value={task.startDate} onChange={e => {
-                                                            const t = [...formData.tasks]; t[idx].startDate = e.target.value; setFormData({ ...formData, tasks: t });
+                                                            const t = [...formData.tasks];
+                                                            t[idx].startDate = e.target.value;
+
+                                                            // Auto Calc
+                                                            const newPercent = calculateTaskProgress(t[idx]);
+                                                            t[idx].percent = newPercent;
+                                                            t[idx].status = newPercent >= 100 ? 'completed' : (newPercent > 0 ? 'in_progress' : 'not_started');
+
+                                                            setFormData({ ...formData, tasks: t });
                                                         }} className="bg-transparent border-none p-0 font-bold w-24" />
                                                     </div>
                                                     <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-2">
                                                         <span className="text-[10px] font-black text-slate-400">DONE</span>
                                                         <input type="date" value={task.endDate} onChange={e => {
-                                                            const t = [...formData.tasks]; t[idx].endDate = e.target.value; setFormData({ ...formData, tasks: t });
+                                                            const t = [...formData.tasks];
+                                                            t[idx].endDate = e.target.value;
+
+                                                            // Auto Calc
+                                                            const newPercent = calculateTaskProgress(t[idx]);
+                                                            t[idx].percent = newPercent;
+                                                            t[idx].status = newPercent >= 100 ? 'completed' : (newPercent > 0 ? 'in_progress' : 'not_started');
+
+                                                            setFormData({ ...formData, tasks: t });
                                                         }} className="bg-transparent border-none p-0 font-bold w-24" />
                                                     </div>
                                                     <span className="text-[10px] font-medium text-slate-400">
@@ -558,22 +587,34 @@ const DailyLogView = () => {
 
                                 <div className="grid grid-cols-2 gap-3 mb-4">
                                     <div className="bg-white p-3 rounded-xl shadow-sm">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase">Day</div>
-                                        <input type="number" value={formData.targets.current_day} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, current_day: e.target.value } })} className="w-full font-black text-xl text-blue-600 border-none p-0" />
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">Start Date</div>
+                                        <input type="date" value={formData.targets.startDate || formData.date} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, startDate: e.target.value } })} className="w-full font-bold text-sm text-blue-600 border-none p-0 bg-transparent" />
                                     </div>
                                     <div className="bg-white p-3 rounded-xl shadow-sm">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase">Total</div>
-                                        <input type="number" value={formData.targets.total_days} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, total_days: e.target.value } })} className="w-full font-black text-xl text-slate-700 border-none p-0" />
+                                        <div className="text-[10px] font-black text-slate-400 uppercase">End Date</div>
+                                        <input type="date" value={formData.targets.endDate || formData.date} onChange={e => setFormData({ ...formData, targets: { ...formData.targets, endDate: e.target.value } })} className="w-full font-bold text-sm text-slate-700 border-none p-0 bg-transparent" />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
-                                        <span>Overall Progress</span>
-                                        <span>{calculatedProgress}%</span>
+                                        <span>Day {Math.max(0, Math.ceil((new Date(formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)))} / {Math.max(1, Math.ceil((new Date(formData.targets.endDate || formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)))}</span>
+                                        <span>
+                                            {(() => {
+                                                const total = Math.max(1, Math.ceil((new Date(formData.targets.endDate || formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)));
+                                                const current = Math.max(0, Math.ceil((new Date(formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)));
+                                                return total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+                                            })()}%
+                                        </span>
                                     </div>
                                     <div className="h-3 bg-white rounded-full overflow-hidden">
-                                        <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${calculatedProgress}%` }} />
+                                        <div className="h-full bg-blue-500 transition-all duration-1000" style={{
+                                            width: `${(() => {
+                                                const total = Math.max(1, Math.ceil((new Date(formData.targets.endDate || formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)));
+                                                const current = Math.max(0, Math.ceil((new Date(formData.date) - new Date(formData.targets.startDate || formData.date)) / (1000 * 60 * 60 * 24)));
+                                                return total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+                                            })()}%`
+                                        }} />
                                     </div>
                                 </div>
                             </div>
@@ -588,7 +629,7 @@ const DailyLogView = () => {
             ) : (
                 // 5. History Tab with Edit/Delete
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {history.length === 0 ? <div className="col-span-full py-20 text-center text-slate-400 font-black">No logs found.</div> :
+                    {(!history || history.length === 0) ? <div className="col-span-full py-20 text-center text-slate-400 font-black">No logs found.</div> :
                         history.map((log) => (
                             <div key={log.id} onClick={() => editLog(log)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 hover:border-blue-500 shadow-sm hover:shadow-lg transition-all cursor-pointer group relative">
                                 <button onClick={(e) => deleteLog(log.id, e)} className="absolute top-4 right-4 p-2 bg-slate-50 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-colors opacity-0 group-hover:opacity-100">
@@ -598,17 +639,17 @@ const DailyLogView = () => {
                                     <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
                                     <div>
                                         <div className="text-[10px] font-black text-slate-400 uppercase">Log Date</div>
-                                        <div className="font-bold text-lg dark:text-white">{log.date}</div>
+                                        <div className="font-bold text-lg dark:text-white">{log.date || 'N/A'}</div>
                                     </div>
                                 </div>
                                 <div className="space-y-2 border-t border-slate-100 pt-4">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500 font-medium">Day Progress</span>
-                                        <span className="font-black text-blue-600">{log.current_day} / {log.total_days}</span>
+                                        <span className="font-black text-blue-600">{log.current_day || 0} / {log.total_days || 0}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500 font-medium">Manpower</span>
-                                        <span className="font-bold dark:text-white">{log.content?.manpower?.reduce((s, m) => s + (parseInt(m.count) || 0), 0)} Pax</span>
+                                        <span className="font-bold dark:text-white">{(log.content?.manpower || []).reduce((s, m) => s + (parseInt(m.count) || 0), 0)} Pax</span>
                                     </div>
                                 </div>
                             </div>
