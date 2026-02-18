@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    Calendar, Users, HardHat, Activity,
     Target, Save, History,
     TrendingUp, CheckCircle2, AlertTriangle, Clock,
     Plus, Trash2, ChevronDown, Wrench,
