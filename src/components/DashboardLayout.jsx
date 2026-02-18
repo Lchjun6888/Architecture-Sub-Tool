@@ -13,7 +13,8 @@ import {
     Sun,
     Menu,
     X,
-    Users
+    Users,
+    Construction
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
