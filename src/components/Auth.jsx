@@ -12,6 +12,12 @@ const Auth = ({ onAuthSuccess }) => {
 
     const handleAuth = async (e) => {
         e.preventDefault();
+
+        if (!supabase) {
+            setError('Supabase client is not initialized. Check environment variables.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 

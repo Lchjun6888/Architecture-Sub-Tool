@@ -17,6 +17,11 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      console.warn('Supabase client not initialized. Check environment variables.');
+      return;
+    }
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
