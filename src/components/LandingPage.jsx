@@ -231,7 +231,7 @@ const LandingPage = ({ onStart }) => {
                             <ul className="space-y-2 text-sm font-bold text-slate-600 dark:text-slate-300">
                                 <li>ArchSub Construction Management</li>
                                 <li className="text-slate-400 dark:text-slate-500 font-medium">ArchSub HQ, Seoul, South Korea</li>
-                                <li><a href="mailto:jay@archbuildhunt.com" className="hover:text-blue-500 transition-colors">jay@archbuildhunt.com</a></li>
+                                <li><a href="mailto:lsmith5695@gmail.com" className="hover:text-blue-500 transition-colors">lsmith5695@gmail.com</a></li>
                             </ul>
                         </div>
                         <div className="space-y-4">
