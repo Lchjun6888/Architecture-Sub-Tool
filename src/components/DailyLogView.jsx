@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import {
     Calendar, Users, HardHat, Activity,
     Target, Save, History, Search,
@@ -23,7 +24,7 @@ const STATUS_OPTIONS = [
     { value: 'delayed', label: 'DELAYED', color: 'bg-red-100 text-red-600' }
 ];
 
-const DailyLogView = () => {
+const DailyLogView = ({ user }) => {
     const [activeTab, setActiveTab] = useState('new');
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
@@ -74,16 +75,25 @@ const DailyLogView = () => {
     // --- Init & History ---
     useEffect(() => {
         loadHistory();
-    }, []);
+    }, [user]);
 
-    const loadHistory = () => {
+    const loadHistory = async () => {
         try {
-            const saved = localStorage.getItem('daily_logs');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed)) {
-                    // Filter out invalid entries to prevent crashes
-                    const validHistory = parsed.filter(item => item && typeof item === 'object' && item.id);
+            if (user) {
+                const { data, error } = await supabase
+                    .from('daily_logs')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('date', { ascending: false });
+
+                if (error) throw error;
+                setHistory(data || []);
+            } else {
+                const saved = localStorage.getItem('daily_logs');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Filter out invalid entries
+                    const validHistory = Array.isArray(parsed) ? parsed.filter(item => item && typeof item === 'object' && item.id) : [];
                     setHistory(validHistory);
                 } else {
                     setHistory([]);
@@ -91,7 +101,10 @@ const DailyLogView = () => {
             }
         } catch (e) {
             console.error("Failed to load history", e);
-            setHistory([]);
+            // Fallback to local storage on error? Maybe not to avoid confusion.
+            // But let's keep the local storage read just in case of network error ONLY if we want robust offline support.
+            // For now, simple error handling.
+            if (!user) setHistory([]);
         }
     };
 
@@ -220,7 +233,7 @@ const DailyLogView = () => {
         }
         setLoading(true);
         // Small delay to ensure UI loading state is visible
-        setTimeout(() => {
+        setTimeout(async () => {
             try {
                 // Calc project stats for history
                 const pStart = new Date(formData.targets.startDate || formData.date);
@@ -230,26 +243,39 @@ const DailyLogView = () => {
                 const totalDays = Math.ceil((pEnd - pStart) / (1000 * 60 * 60 * 24));
                 const currentDay = Math.ceil((pToday - pStart) / (1000 * 60 * 60 * 24));
 
-                const newEntry = {
-                    id: editingId || Date.now(),
+                const entryId = editingId || Date.now();
+                const newEntryContent = {
+                    id: entryId,
                     date: formData.date,
-                    content: { ...formData }, // Deep copy
+                    content: { ...formData },
                     total_days: Math.max(1, totalDays),
                     current_day: Math.max(0, currentDay)
                 };
 
-                // Get fresh history
-                const currentHistory = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-                let updatedHistory;
-
-                if (editingId) {
-                    updatedHistory = currentHistory.map(h => h.id === editingId ? newEntry : h);
+                if (user) {
+                    const { error } = await supabase.from('daily_logs').upsert({
+                        id: entryId,
+                        user_id: user.id,
+                        date: formData.date,
+                        content: { ...formData },
+                        total_days: Math.max(1, totalDays),
+                        current_day: Math.max(0, currentDay)
+                    });
+                    if (error) throw error;
+                    loadHistory();
                 } else {
-                    updatedHistory = [newEntry, ...currentHistory];
-                }
+                    const currentHistory = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+                    let updatedHistory;
 
-                localStorage.setItem('daily_logs', JSON.stringify(updatedHistory));
-                setHistory(updatedHistory);
+                    if (editingId) {
+                        updatedHistory = currentHistory.map(h => h.id === editingId ? newEntryContent : h);
+                    } else {
+                        updatedHistory = [newEntryContent, ...currentHistory];
+                    }
+
+                    localStorage.setItem('daily_logs', JSON.stringify(updatedHistory));
+                    setHistory(updatedHistory);
+                }
                 setEditingId(null);
                 setActiveTab('history');
                 alert('Log saved successfully!');
@@ -262,12 +288,24 @@ const DailyLogView = () => {
         }, 100);
     };
 
-    const deleteLog = (id, e) => {
+    const deleteLog = async (id, e) => {
         e.stopPropagation();
         if (!window.confirm("Delete this log?")) return;
-        const filtered = history.filter(h => h.id !== id);
-        setHistory(filtered);
-        localStorage.setItem('daily_logs', JSON.stringify(filtered));
+
+        if (user) {
+            try {
+                const { error } = await supabase.from('daily_logs').delete().match({ id, user_id: user.id });
+                if (error) throw error;
+                setHistory(prev => prev.filter(h => h.id !== id));
+            } catch (err) {
+                console.error("Error deleting log:", err);
+                alert("Failed to delete log");
+            }
+        } else {
+            const filtered = history.filter(h => h.id !== id);
+            setHistory(filtered);
+            localStorage.setItem('daily_logs', JSON.stringify(filtered));
+        }
     };
 
     const editLog = (item) => {

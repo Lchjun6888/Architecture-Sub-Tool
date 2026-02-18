@@ -103,7 +103,7 @@ function App() {
         {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} user={session?.user} /> : null}
         {view === 'excel' ? <ExcelSplitter /> : null}
         {view === 'pdf' ? <PDFComparer /> : null}
-        {view === 'daily' ? <DailyLogView /> : null}
+        {view === 'daily' ? <DailyLogView user={session?.user} /> : null}
 
         {view === 'payroll' ? <PayrollView /> : null}
         {view === 'settings' ? <SettingsView /> : null}
