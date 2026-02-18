@@ -134,7 +134,7 @@ const LandingPage = ({ onStart }) => {
                                 <ul className="space-y-4 mt-8">
                                     <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
                                         <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <span>Split up to **500 rows** per file</span>
+                                        <span>Split up to 500 rows per file</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
                                         <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
@@ -171,23 +171,23 @@ const LandingPage = ({ onStart }) => {
                                 <ul className="space-y-4 mt-8">
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>**Unlimited** rows & sheets processing</span>
+                                        <span>Unlimited rows & sheets processing</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>**Smart Logic**: Keyword-based splitting (Total/Subtotal)</span>
+                                        <span>Smart Logic: Keyword-based splitting (Total/Subtotal)</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>**Real-time Full Editing**: Edit directly in preview</span>
+                                        <span>Real-time Full Editing: Edit directly in preview</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>**Custom Naming**: Use cell data for filenames</span>
+                                        <span>Custom Naming: Use cell data for filenames</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>Multi-page **PDF Comparison** Tool</span>
+                                        <span>Multi-page PDF Comparison Tool</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-emerald-400 font-bold">
                                         <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />

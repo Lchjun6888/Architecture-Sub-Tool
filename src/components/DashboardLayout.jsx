@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
-const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
+const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleNavClick = (view) => {
@@ -25,45 +25,38 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
         setIsSidebarOpen(false);
     };
 
+    const handleLogoutClick = async () => {
+        if (onLogout) {
+            await onLogout();
+        } else if (onBack) {
+            onBack();
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans overflow-x-hidden">
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+                    className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 lg:hidden transition-all duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
-            <aside className={`
-                w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
-                flex flex-col p-6 fixed inset-y-0 z-50 transition-transform duration-300 lg:translate-x-0
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            `}>
-                <div className="flex items-center justify-between mb-10 px-2 lg:block">
-                    <div
-                        className="flex items-center gap-3 cursor-pointer group"
-                        onClick={onBack}
-                    >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
-                            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                <path d="M5 21V7L12 3L19 7V21" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                                <path d="M9 21V11H15V21" stroke="currentColor" strokeWidth="2" />
-                                <path d="M5 11H19" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
-                            </svg>
-                        </div>
-                        <div>
-                            <span className="text-xl font-black tracking-tight dark:text-white block leading-none group-hover:text-blue-500 transition-colors">ArchSub</span>
-                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Architecture Assistant</span>
-                        </div>
+            <aside className={`fixed inset-y-0 left-0 w-72 h-full glass z-50 border-r border-white/20 dark:border-slate-800/50 flex flex-col p-6 transition-all duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                {/* Logo Section */}
+                <div className="flex items-center gap-4 mb-10 px-2 group cursor-pointer" onClick={() => handleNavClick('overview')}>
+                    <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                        <Construction size={28} />
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400">
-                        <X size={24} />
-                    </button>
+                    <div>
+                        <h1 className="text-xl font-black dark:text-white tracking-tighter leading-none">ArchSub</h1>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Architecture Assistant</p>
+                    </div>
                 </div>
 
+                {/* Navigation */}
                 <nav className="flex-1 space-y-1">
                     <NavItem icon={<LayoutDashboard size={20} />} label="Overview" onClick={() => handleNavClick('overview')} active={activeNav === 'overview'} />
                     <NavItem icon={<Scissors size={20} />} label="ArchSub Split" onClick={() => handleNavClick('excel')} active={activeNav === 'excel'} />
@@ -87,7 +80,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                     </div>
 
                     <button
-                        onClick={onBack}
+                        onClick={handleLogoutClick}
                         className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl font-bold transition-all"
                     >
                         <LogOut size={20} />
