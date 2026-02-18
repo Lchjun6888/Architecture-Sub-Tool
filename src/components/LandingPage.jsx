@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 
 const LandingPage = ({ onStart }) => {
+    const [legalModal, setLegalModal] = React.useState(null); // 'privacy' | 'tos' | null
+
     const scrollToPricing = () => {
         const element = document.getElementById('pricing-section');
         if (element) {
@@ -121,11 +123,12 @@ const LandingPage = ({ onStart }) => {
                 </div>
             </section>
 
-            {/* Pricing */}
+            {/* Pricing Section */}
             <section id="pricing-section" className="py-20 px-6">
                 <div className="max-w-4xl mx-auto text-center space-y-12">
                     <h2 className="text-4xl font-black dark:text-white">Transparent Pricing</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Free Plan */}
                         <div className="glass p-8 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-6 text-left flex flex-col h-full transform hover:scale-[1.02] transition-all">
                             <div className="flex-1">
                                 <h4 className="text-lg font-bold dark:text-white">Free Plan</h4>
@@ -155,9 +158,10 @@ const LandingPage = ({ onStart }) => {
                             </button>
                         </div>
 
+                        {/* Pro Plan */}
                         <div className="bg-slate-900 border-4 border-blue-500 p-8 rounded-2xl space-y-6 text-left relative overflow-hidden flex flex-col h-full transform hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20">
-                            <div className="absolute top-0 right-0">
-                                <div className="bg-blue-500 text-white text-[10px] font-black px-8 py-2 rotate-45 translate-x-[25px] translate-y-[-5px] shadow-lg">POPULAR</div>
+                            <div className="absolute top-0 right-0 overflow-hidden w-32 h-32 pointer-events-none">
+                                <div className="absolute top-6 -right-8 w-32 bg-blue-500 text-white text-[10px] font-black py-1.5 text-center rotate-45 shadow-lg uppercase tracking-widest">POPULAR</div>
                             </div>
 
                             <div className="flex-1">
@@ -205,6 +209,92 @@ const LandingPage = ({ onStart }) => {
                     </div>
                 </div>
             </section>
+
+            {/* Footer */}
+            <footer className="py-20 px-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+                    <div className="space-y-4 max-w-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                                <FileSpreadsheet size={18} />
+                            </div>
+                            <span className="text-lg font-black dark:text-white">ArchSub</span>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                            The ultimate construction data suite. Split, compare, and master your BIM & Schedule data with AI precision.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-12 w-full md:w-auto">
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Company</h4>
+                            <ul className="space-y-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                <li>ArchSub Construction Management</li>
+                                <li className="text-slate-400 dark:text-slate-500 font-medium">ArchSub HQ, Seoul, South Korea</li>
+                                <li><a href="mailto:jay@archbuildhunt.com" className="hover:text-blue-500 transition-colors">jay@archbuildhunt.com</a></li>
+                            </ul>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Legal</h4>
+                            <ul className="space-y-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                <li><button onClick={() => setLegalModal('privacy')} className="hover:text-blue-500 transition-colors">Privacy Policy</button></li>
+                                <li><button onClick={() => setLegalModal('tos')} className="hover:text-blue-500 transition-colors">Terms of Service</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div className="max-w-6xl mx-auto mt-20 pt-8 border-t border-slate-100 dark:border-slate-900 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div>© 2026 ARCHSUB TOOL. ALL RIGHTS RESERVED.</div>
+                    <div className="flex gap-4">
+                        <span className="flex items-center gap-1"><ShieldCheck size={12} /> SECURE CLOUD</span>
+                        <span className="flex items-center gap-1"><Zap size={12} /> ENTERPRISE CORE</span>
+                    </div>
+                </div>
+            </footer>
+
+            {/* Legal Modal */}
+            {legalModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[80vh] overflow-hidden rounded-[32px] flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <h3 className="text-2xl font-black dark:text-white capitalize">
+                                {legalModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
+                            </h3>
+                            <button onClick={() => setLegalModal(null)} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all">
+                                <ArrowRight className="rotate-45" size={24} />
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto text-slate-600 dark:text-slate-300 text-sm leading-relaxed space-y-6 font-medium">
+                            {legalModal === 'privacy' ? (
+                                <div className="space-y-4">
+                                    <p className="font-bold">Last Updated: February 18, 2026</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">1. Information We Collect</h5>
+                                    <p>We collect minimal information required to provide our services, including email for account management and payment processing data via Lemon Squeezy.</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">2. Local Processing</h5>
+                                    <p>Importantly, your Excel and PDF files are processed locally in your browser. We do NOT store or upload your sensitive construction data to our servers.</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">3. Use of Data</h5>
+                                    <p>We use your email only for authentication and critical service updates. We do not sell your personal information to third parties.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="font-bold">Last Updated: February 18, 2026</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">1. Acceptance of Terms</h5>
+                                    <p>By using ArchSub, you agree to these terms. Our tools are provided "as is" for professional productivity enhancement in construction management.</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">2. Subscriptions & Payments</h5>
+                                    <p>ArchSub Pro is a paid subscription. Billing is handled by Lemon Squeezy. You can cancel at any time, but refunds are subject to Lemon Squeezy's refund policy.</p>
+                                    <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">3. Intellectual Property</h5>
+                                    <p>The ArchSub brand, code, and logos are property of ArchSub Construction Management. You may not reverse engineer or scrape our services.</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
+                            <button onClick={() => setLegalModal(null)} className="px-6 py-2 bg-blue-500 text-white font-black rounded-lg hover:bg-blue-600 transition-all">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
