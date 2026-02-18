@@ -15,19 +15,28 @@ function App() {
   const [session, setSession] = useState(null);
   const [view, setView] = useState('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true); // Prevent blank screen during session check
 
   useEffect(() => {
-    // Check active session
+    // Check active session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) setIsLoggedIn(true);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
         setIsLoggedIn(true);
+        setView('dashboard');
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth state changes (handles email verification callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      if (session) {
+        setIsLoggedIn(true);
+        // Auto-redirect to dashboard after email verification or sign-in
+        if (event === 'SIGNED_IN') {
+          setView('dashboard');
+        }
       } else {
         setIsLoggedIn(false);
         setView('landing');
@@ -52,6 +61,18 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
+
+  // Show spinner while checking session to avoid blank screen
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Loading ArchSub...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'auth' && !isLoggedIn) {
     return (
