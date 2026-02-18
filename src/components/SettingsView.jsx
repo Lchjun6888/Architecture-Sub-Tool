@@ -38,8 +38,8 @@ const SettingsView = () => {
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <InputGroup label="Full Name" value="Jay Admin" />
-                                <InputGroup label="Email Address" value="jay@archsub.com" />
-                                <InputGroup label="Company" value="ArchSub Engineering" />
+                                <InputGroup label="Email Address" value="jay@archbuildhunt.com" />
+                                <InputGroup label="Company" value="ArchSub Construction Management" />
                                 <InputGroup label="Role" value="Principal Architect" />
                             </div>
                         </div>

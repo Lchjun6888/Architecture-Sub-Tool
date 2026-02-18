@@ -60,18 +60,18 @@ const LandingPage = ({ onStart }) => {
             <section className="pt-32 pb-20 px-6">
                 <div className="max-w-6xl mx-auto text-center space-y-8">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-xs font-bold animate-pulse">
-                        <Zap size={14} /> New: Architecture Split Engine v2.0
+                        <Zap size={14} /> New: ArchSub Core Engine v2.0
                     </div>
                     <h1 className="text-6xl md:text-7xl font-black tracking-tighter text-slate-900 dark:text-white leading-[1.1]">
-                        Splitting Archive Files <br />
-                        <span className="text-gradient">Made for Builders.</span>
+                        Master Construction Data <br />
+                        <span className="text-gradient">With ArchSub.</span>
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-200 max-w-2xl mx-auto leading-relaxed">
-                        A dedicated suite for architects and engineers. Split complex bill of materials, preserve styles, and automate your workflow with professional precision.
+                        The ultimate productivity suite for architecture and construction management. Automate your daily logs, analyze costs, and split complex datasets with ease.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
                         <button onClick={onStart} className="w-full sm:w-auto px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-lg font-black transition-all shadow-xl shadow-blue-500/40 flex items-center justify-center gap-2 group active:scale-95">
-                            Start Splitting Now <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            Start Your Journey <ArrowRight className="group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2">
                             Watch Demo
@@ -199,7 +199,7 @@ const LandingPage = ({ onStart }) => {
                                 onClick={() => window.open('https://archisubtool.lemonsqueezy.com/checkout/buy/72c39d38-bbc2-427f-a48a-7c5ee4d9388d', '_blank')}
                                 className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group"
                             >
-                                Upgrade to Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                Get Started with ArchSub Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
                     </div>

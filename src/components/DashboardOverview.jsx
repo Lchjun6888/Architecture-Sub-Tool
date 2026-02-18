@@ -57,8 +57,8 @@ const DashboardOverview = ({ onNav }) => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <ToolCard
-                            title="Excel Splitter"
-                            desc="Split large BOM/Schedules."
+                            title="ArchSub Split"
+                            desc="Professional BOM & Schedule splitting."
                             icon={<FileSpreadsheet size={32} />}
                             color="blue"
                             onClick={() => onNav('excel')}

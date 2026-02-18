@@ -66,7 +66,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
 
                 <nav className="flex-1 space-y-1">
                     <NavItem icon={<LayoutDashboard size={20} />} label="Overview" onClick={() => handleNavClick('overview')} active={activeNav === 'overview'} />
-                    <NavItem icon={<Scissors size={20} />} label="Excel Splitter" onClick={() => handleNavClick('excel')} active={activeNav === 'excel'} />
+                    <NavItem icon={<Scissors size={20} />} label="ArchSub Split" onClick={() => handleNavClick('excel')} active={activeNav === 'excel'} />
                     <NavItem icon={<Layers size={20} />} label="PDF Compare" onClick={() => handleNavClick('pdf')} active={activeNav === 'pdf'} />
                     <NavItem icon={<History size={20} />} label="Daily Technical Log" onClick={() => handleNavClick('daily')} active={activeNav === 'daily'} />
                     <NavItem icon={<Bell size={20} />} label="Activity History" onClick={() => handleNavClick('logs')} active={activeNav === 'logs'} />
@@ -77,8 +77,13 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav }) => {
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800/50">
                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Current Plan</p>
-                        <p className="text-sm font-black dark:text-white">Professional Plan</p>
-                        <button className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all">Manage Plan</button>
+                        <p className="text-sm font-black dark:text-white">ArchSub Pro</p>
+                        <button
+                            onClick={() => window.open('https://archisubtool.lemonsqueezy.com/checkout/buy/72c39d38-bbc2-427f-a48a-7c5ee4d9388d', '_blank')}
+                            className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all"
+                        >
+                            Manage Plan
+                        </button>
                     </div>
 
                     <button
