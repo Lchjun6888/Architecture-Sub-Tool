@@ -20,6 +20,30 @@ import HelpGuide from './HelpGuide';
 
 const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() =>
+        document.documentElement.classList.contains('dark') || localStorage.getItem('darkMode') === 'true'
+    );
+
+    React.useEffect(() => {
+        const handleThemeChange = () => {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+        };
+        window.addEventListener('themeChanged', handleThemeChange);
+        return () => window.removeEventListener('themeChanged', handleThemeChange);
+    }, []);
+
+    const toggleTheme = () => {
+        const willBeDark = !isDarkMode;
+        if (willBeDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('darkMode', 'false');
+        }
+        setIsDarkMode(willBeDark);
+        window.dispatchEvent(new Event('themeChanged'));
+    };
 
     const handleNavClick = (view) => {
         onNav(view);
@@ -120,19 +144,9 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
                             <Bell size={20} />
                         </button>
                         <button
-                            onClick={() => {
-                                const isDark = document.documentElement.classList.contains('dark');
-                                if (isDark) {
-                                    document.documentElement.classList.remove('dark');
-                                    localStorage.setItem('darkMode', 'false');
-                                } else {
-                                    document.documentElement.classList.add('dark');
-                                    localStorage.setItem('darkMode', 'true');
-                                }
-                            }}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-500 transition-all">
-                            <Moon size={20} className="hidden dark:block" />
-                            <Sun size={20} className="block dark:hidden" />
+                            onClick={toggleTheme}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-500 dark:hover:text-amber-400 transition-all">
+                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
                         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 lg:mx-2" />
                         <div className="flex items-center gap-3 pl-2 group cursor-pointer">

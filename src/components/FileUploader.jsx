@@ -1,5 +1,5 @@
 import React from 'react';
-import { CloudUpload, FileText, CheckCircle, X, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { CloudUpload, FileText, CheckCircle, X, ChevronDown, ChevronUp, Layers, AlertCircle } from 'lucide-react';
 
 const FileUploader = ({ files, onUpload, onToggle, onRemove, onSelectAll, onClearAll, onToggleSheet, onConfirm, step }) => {
     const [expandedFiles, setExpandedFiles] = React.useState({});
@@ -51,6 +51,10 @@ const FileUploader = ({ files, onUpload, onToggle, onRemove, onSelectAll, onClea
                             <span className="text-blue-500">Click to upload</span> or drag and drop
                         </p>
                         <p className="text-xs text-slate-400">XLSX, XLS files supported</p>
+                        <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-900/50 z-20 pointer-events-auto">
+                            <AlertCircle size={14} />
+                            Tip: For best splitting results, set your desired print layout in Excel before uploading.
+                        </div>
                     </div>
                 </div>
             </div>
