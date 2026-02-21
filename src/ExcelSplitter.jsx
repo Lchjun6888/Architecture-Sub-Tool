@@ -5,7 +5,8 @@ import RuleConfigurator from './components/RuleConfigurator';
 import DataPreviewer from './components/DataPreviewer';
 import ExportSection from './components/ExportSection';
 
-const ExcelSplitter = () => {
+const ExcelSplitter = ({ user }) => {
+    const isProPlan = user?.user_metadata?.plan === 'pro';
     const {
         step, setStep,
         rowsPerFile, setRowsPerFile,
@@ -67,6 +68,7 @@ const ExcelSplitter = () => {
                             setHeaderRows={setHeaderRows}
                             onAddKeyword={handleAddKeyword}
                             onRemoveKeyword={handleRemoveKeyword}
+                            isProPlan={isProPlan}
                         />
                     )}
                 </div>
@@ -99,6 +101,7 @@ const ExcelSplitter = () => {
                             namingInputRef={namingInputRef}
                             files={files}
                             rowsPerFile={rowsPerFile}
+                            isProPlan={isProPlan}
                         />
                     )}
                 </div>

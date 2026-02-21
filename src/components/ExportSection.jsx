@@ -13,7 +13,8 @@ const ExportSection = ({
     namingInputRef,
     onAddTag,
     files,
-    rowsPerFile
+    rowsPerFile,
+    isProPlan
 }) => {
     return (
         <div className="space-y-6">
@@ -71,18 +72,25 @@ const ExportSection = ({
                         <p className="text-emerald-600 dark:text-emerald-400 font-bold text-xl">{estimatedFiles.toLocaleString()} Files Generated</p>
                     </div>
 
-                    <div className="text-left bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/50 rounded-xl p-5 space-y-4">
+                    <div className="text-left bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/50 rounded-xl p-5 space-y-4 relative">
+                        {!isProPlan && (
+                            <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-800/50 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center cursor-not-allowed">
+                                <span className="bg-yellow-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded-md shadow-md mb-1">PRO FEATURE</span>
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 text-center">Custom Naming Rules</span>
+                            </div>
+                        )}
                         <h3 className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight text-xs">File Naming Rule</h3>
                         <input
                             ref={namingInputRef}
                             value={namingFormat}
-                            onChange={(e) => setNamingFormat(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-base py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-blue-500 shadow-sm"
+                            onChange={(e) => isProPlan && setNamingFormat(e.target.value)}
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-base py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-blue-500 shadow-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900"
                             type="text"
+                            disabled={!isProPlan}
                         />
-                        <div className="flex flex-wrap gap-2">
+                        <div className={`flex flex-wrap gap-2 ${!isProPlan ? 'opacity-50' : ''}`}>
                             {['{Sheet Name}', '{Page Number}', '{Date}', '{Keyword}'].map((tag) => (
-                                <button key={tag} onClick={() => onAddTag(tag)} className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] font-bold text-slate-500 hover:border-blue-500 transition-colors">
+                                <button key={tag} onClick={() => isProPlan && onAddTag(tag)} className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] font-bold text-slate-500 hover:border-blue-500 transition-colors disabled:cursor-not-allowed" disabled={!isProPlan}>
                                     [{tag.replace(/[{}]/g, '')}]
                                 </button>
                             ))}

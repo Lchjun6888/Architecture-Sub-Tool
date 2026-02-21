@@ -35,6 +35,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
     };
 
     const isAdmin = user?.email === 'lsmith5695@gmail.com';
+    const isProPlan = user?.user_metadata?.plan === 'pro';
     const displayName = user?.user_metadata?.full_name || 'Architect';
 
     return (
@@ -74,7 +75,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800/50">
                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Current Plan</p>
-                        <p className="text-sm font-black dark:text-white">ArchSub Pro</p>
+                        <p className="text-sm font-black dark:text-white">{isProPlan ? 'ArchSub Pro' : 'Free Plan'}</p>
                         <button
                             onClick={() => window.open('https://gumroad.com/', '_blank')}
                             className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all"

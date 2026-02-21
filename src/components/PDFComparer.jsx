@@ -11,8 +11,9 @@ import {
 // Set worker source for PDF.js - Using .min.mjs for version 5+ compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-const PDFComparer = () => {
+const PDFComparer = ({ user }) => {
     // --- State ---
+    const isProPlan = user?.user_metadata?.plan === 'pro';
     const [fileBefore, setFileBefore] = useState(null);
     const [fileAfter, setFileAfter] = useState(null);
     const [isComparing, setIsComparing] = useState(false);
@@ -197,10 +198,17 @@ const PDFComparer = () => {
             pdfAfterRef.current = await pdfjsLib.getDocument(arrayBufferAfter).promise;
 
             const numPages = Math.min(pdfBeforeRef.current.numPages, pdfAfterRef.current.numPages);
+            let limitPages = numPages;
+
+            if (!isProPlan && numPages > 10) {
+                limitPages = 10;
+                alert("Free plan is limited to comparing the first 10 pages only. Please upgrade to Pro for unlimited multi-page comparisons.");
+            }
+
             const results = [];
 
-            for (let i = 1; i <= numPages; i++) {
-                setProgressText(`Processing Page ${i} of ${numPages}...`);
+            for (let i = 1; i <= limitPages; i++) {
+                setProgressText(`Processing Page ${i} of ${limitPages}...`);
                 const beforePage = await renderPage(pdfBeforeRef.current, i, scale);
                 const afterPage = await renderPage(pdfAfterRef.current, i, scale);
 
@@ -213,7 +221,7 @@ const PDFComparer = () => {
                     ...diffResult
                 });
 
-                setProgress(Math.round((i / numPages) * 100));
+                setProgress(Math.round((i / limitPages) * 100));
             }
 
             setDiffResults(results);

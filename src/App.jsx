@@ -109,8 +109,8 @@ function App() {
         user={session?.user}
       >
         {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} user={session?.user} /> : null}
-        {view === 'excel' ? <ExcelSplitter /> : null}
-        {view === 'pdf' ? <PDFComparer /> : null}
+        {view === 'excel' ? <ExcelSplitter user={session?.user} /> : null}
+        {view === 'pdf' ? <PDFComparer user={session?.user} /> : null}
         {view === 'daily' ? <DailyLogView user={session?.user} /> : null}
 
         {view === 'payroll' ? <PayrollView /> : null}
