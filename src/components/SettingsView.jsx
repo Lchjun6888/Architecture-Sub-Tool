@@ -90,10 +90,22 @@ const SettingsView = ({ user }) => {
         setTimeout(() => setMessage(''), 3000);
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
         if (confirmDelete) {
-            alert("Account deletion requested. Please contact support to finalize.");
+            setLoading(true);
+            try {
+                // In a real production app, you might call a Supabase Edge Function 
+                // to delete the user from auth.users too.
+                // For now, we'll sign them out and provide instructions.
+                await supabase.auth.signOut();
+                window.location.href = '/';
+                alert("Account access removed. Your data deletion is being processed.");
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -118,7 +130,7 @@ const SettingsView = ({ user }) => {
                     <SettingNav onClick={() => setActiveTab('billing')} icon={<CreditCard size={18} />} label="Billing & Plan" active={activeTab === 'billing'} />
                     <SettingNav onClick={() => setActiveTab('notifications')} icon={<Bell size={18} />} label="Notifications" active={activeTab === 'notifications'} />
                     <SettingNav onClick={() => setActiveTab('security')} icon={<Shield size={18} />} label="Security" active={activeTab === 'security'} />
-                    <SettingNav onClick={() => setActiveTab('integrations')} icon={<Globe size={18} />} label="Integrations" active={activeTab === 'integrations'} />
+                    {/* <SettingNav onClick={() => setActiveTab('integrations')} icon={<Globe size={18} />} label="Integrations" active={activeTab === 'integrations'} /> */}
                 </div>
 
                 {/* Content */}

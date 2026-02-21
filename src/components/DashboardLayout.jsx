@@ -101,7 +101,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Current Plan</p>
                         <p className="text-sm font-black dark:text-white">{isProPlan ? 'ArchSub Pro' : 'Free Plan'}</p>
                         <button
-                            onClick={() => window.open('https://quakkabuild.gumroad.com/l/archsubtools', '_blank')}
+                            onClick={() => window.open('https://quakkabuild.gumroad.com/l/archsubtools?_gl=1*5xt88k*_ga*MTc0MzQ4MDg5NS4xNzcxNjg5MzEw*_ga_6LJN6D94N6*czE3NzE2OTI4OTYkbzIkZzEkdDE3NzE2OTQ0MDUkajYwJGwwJGgw', '_blank')}
                             className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all"
                         >
                             Manage Plan
