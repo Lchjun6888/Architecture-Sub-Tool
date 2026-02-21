@@ -13,7 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLi
 
 const PDFComparer = ({ user }) => {
     // --- State ---
-    const isProPlan = user?.user_metadata?.plan === 'pro';
+    const isProPlan = user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com';
     const [fileBefore, setFileBefore] = useState(null);
     const [fileAfter, setFileAfter] = useState(null);
     const [isComparing, setIsComparing] = useState(false);

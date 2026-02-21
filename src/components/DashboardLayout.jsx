@@ -59,7 +59,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
     };
 
     const isAdmin = user?.email === 'lsmith5695@gmail.com';
-    const isProPlan = user?.user_metadata?.plan === 'pro';
+    const isProPlan = user?.user_metadata?.plan === 'pro' || isAdmin;
     const displayName = user?.user_metadata?.full_name || 'Architect';
 
     return (

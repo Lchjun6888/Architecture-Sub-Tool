@@ -6,7 +6,7 @@ import DataPreviewer from './components/DataPreviewer';
 import ExportSection from './components/ExportSection';
 
 const ExcelSplitter = ({ user }) => {
-    const isProPlan = user?.user_metadata?.plan === 'pro';
+    const isProPlan = user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com';
     const {
         step, setStep,
         rowsPerFile, setRowsPerFile,

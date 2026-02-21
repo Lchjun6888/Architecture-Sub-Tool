@@ -202,9 +202,9 @@ const SettingsView = ({ user }) => {
                             <div className="bg-blue-50 dark:bg-blue-900/20 p-6 sm:p-8 rounded-3xl border border-blue-100 dark:border-blue-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                                 <div>
                                     <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">Current Plan</p>
-                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{user?.user_metadata?.plan === 'pro' ? 'ArchSub Pro' : 'Free Plan'}</p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{(user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com') ? 'ArchSub Pro' : 'Free Plan'}</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm">
-                                        {user?.user_metadata?.plan === 'pro'
+                                        {(user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com')
                                             ? 'You currently have access to all premium features including unlimited PDF pages.'
                                             : 'Upgrade to the Pro plan to unlock unlimited PDF page comparisons and more.'}
                                     </p>
