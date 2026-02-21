@@ -200,7 +200,7 @@ const LandingPage = ({ onStart }) => {
                                 </ul>
                             </div>
                             <button
-                                onClick={() => window.open('https://archisubtool.lemonsqueezy.com/checkout/buy/72c39d38-bbc2-427f-a48a-7c5ee4d9388d', '_blank')}
+                                onClick={() => window.open('https://gumroad.com/', '_blank')}
                                 className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group"
                             >
                                 Get Started with ArchSub Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -269,7 +269,7 @@ const LandingPage = ({ onStart }) => {
                                 <div className="space-y-4">
                                     <p className="font-bold">Last Updated: February 18, 2026</p>
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">1. Information We Collect</h5>
-                                    <p>We collect minimal information required to provide our services, including email for account management and payment processing data via Lemon Squeezy.</p>
+                                    <p>We collect minimal information required to provide our services, including email for account management and payment processing data via Gumroad.</p>
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">2. Local Processing</h5>
                                     <p>Importantly, your Excel and PDF files are processed locally in your browser. We do NOT store or upload your sensitive construction data to our servers.</p>
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">3. Use of Data</h5>
@@ -281,7 +281,7 @@ const LandingPage = ({ onStart }) => {
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">1. Acceptance of Terms</h5>
                                     <p>By using ArchSub, you agree to these terms. Our tools are provided "as is" for professional productivity enhancement in construction management.</p>
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">2. Subscriptions & Payments</h5>
-                                    <p>ArchSub Pro is a paid subscription. Billing is handled by Lemon Squeezy. You can cancel at any time, but refunds are subject to Lemon Squeezy's refund policy.</p>
+                                    <p>ArchSub Pro is a paid subscription. Billing is handled by Gumroad. You can cancel at any time, but refunds are subject to Gumroad's refund policy.</p>
                                     <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">3. Intellectual Property</h5>
                                     <p>The ArchSub brand, code, and logos are property of ArchSub Construction Management. You may not reverse engineer or scrape our services.</p>
                                 </div>

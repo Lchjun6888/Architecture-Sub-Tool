@@ -19,6 +19,14 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initial dark mode setup
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     if (!supabase) {
       console.warn('Supabase client not initialized. Check environment variables.');
       setLoading(false);
@@ -106,7 +114,7 @@ function App() {
         {view === 'daily' ? <DailyLogView user={session?.user} /> : null}
 
         {view === 'payroll' ? <PayrollView /> : null}
-        {view === 'settings' ? <SettingsView /> : null}
+        {view === 'settings' ? <SettingsView user={session?.user} /> : null}
       </DashboardLayout>
     );
   }

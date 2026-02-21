@@ -76,7 +76,7 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Current Plan</p>
                         <p className="text-sm font-black dark:text-white">ArchSub Pro</p>
                         <button
-                            onClick={() => window.open('https://archisubtool.lemonsqueezy.com/checkout/buy/72c39d38-bbc2-427f-a48a-7c5ee4d9388d', '_blank')}
+                            onClick={() => window.open('https://gumroad.com/', '_blank')}
                             className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all"
                         >
                             Manage Plan
@@ -118,8 +118,20 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
                         <button className="w-10 h-10 hidden xs:flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-500 transition-all">
                             <Bell size={20} />
                         </button>
-                        <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-500 transition-all">
-                            <Sun size={20} />
+                        <button
+                            onClick={() => {
+                                const isDark = document.documentElement.classList.contains('dark');
+                                if (isDark) {
+                                    document.documentElement.classList.remove('dark');
+                                    localStorage.setItem('darkMode', 'false');
+                                } else {
+                                    document.documentElement.classList.add('dark');
+                                    localStorage.setItem('darkMode', 'true');
+                                }
+                            }}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-500 transition-all">
+                            <Moon size={20} className="hidden dark:block" />
+                            <Sun size={20} className="block dark:hidden" />
                         </button>
                         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 lg:mx-2" />
                         <div className="flex items-center gap-3 pl-2 group cursor-pointer">
