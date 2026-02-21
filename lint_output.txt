@@ -1,0 +1,46 @@
+
+E:\OneDrive\0_Ai agent\16_워드프레스 html\excel-splitter-app\src\App.jsx
+  32:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  30 |     if (!supabase) {
+  31 |       console.warn('Supabase client not initialized. Check environment variables.');
+> 32 |       setLoading(false);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |       return;
+  34 |     }
+  35 |  react-hooks/set-state-in-effect
+
+E:\OneDrive\0_Ai agent\16_워드프레스 html\excel-splitter-app\src\components\Auth.jsx
+  26:25  error  'data' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+E:\OneDrive\0_Ai agent\16_워드프레스 html\excel-splitter-app\src\components\DailyLogView.jsx
+   78:8   warning  React Hook useEffect has a missing dependency: 'loadHistory'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  199:8   warning  React Hook useEffect has missing dependencies: 'calculateTaskProgress' and 'formData.tasks'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  216:11  error    'autoFillTaskPercent' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                              no-unused-vars
+  335:11  error    'calculatedProgress' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                               no-unused-vars
+
+E:\OneDrive\0_Ai agent\16_워드프레스 html\excel-splitter-app\src\components\SettingsView.jsx
+  30:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  28 |     useEffect(() => {
+  29 |         if (user) {
+> 30 |             setFullName(user.user_metadata?.full_name || '');
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  31 |             setCompany(user.user_metadata?.company || '');
+  32 |             setRole(user.user_metadata?.role || '');
+  33 |  react-hooks/set-state-in-effect
+
+✖ 7 problems (5 errors, 2 warnings)
+
