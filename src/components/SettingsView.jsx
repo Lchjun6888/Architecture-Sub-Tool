@@ -198,7 +198,7 @@ const SettingsView = ({ user }) => {
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => window.open('https://gumroad.com/', '_blank')}
+                                    onClick={() => window.open('https://quakkabuild.gumroad.com/l/archsubtools', '_blank')}
                                     className="w-full sm:w-auto px-8 py-4 bg-blue-500 text-white rounded-2xl font-black shadow-xl shadow-blue-500/30 hover:bg-blue-600 transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95"
                                 >
                                     Manage Subscription <ExternalLink size={18} />
