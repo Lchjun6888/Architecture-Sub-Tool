@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
-const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
+const DashboardLayout = ({ children, onNav, activeNav }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() =>
         document.documentElement.classList.contains('dark') || localStorage.getItem('darkMode') === 'true'
@@ -50,13 +50,6 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
         setIsSidebarOpen(false);
     };
 
-    const handleLogoutClick = async () => {
-        if (onLogout) {
-            await onLogout();
-        } else if (onBack) {
-            onBack();
-        }
-    };
 
     const isProPlan = true;
     const displayName = 'Architect';
@@ -100,15 +93,6 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Status</p>
                         <p className="text-sm font-black dark:text-white">ArchSub Pro (Unlocked)</p>
                     </div>
-
-
-                    <button
-                        onClick={handleLogoutClick}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl font-bold transition-all"
-                    >
-                        <LogOut size={20} />
-                        Logout
-                    </button>
                 </div>
             </aside>
 
@@ -143,19 +127,13 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
                             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
                         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 lg:mx-2" />
-                        <div className="flex items-center gap-3 pl-2 group cursor-pointer">
+                        <div className="flex items-center gap-3 pl-2 group">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-black dark:text-white group-hover:text-blue-500 transition-colors">{displayName}</p>
-                                {isAdmin && (
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">Admin</p>
-                                )}
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">Local Mode</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 group-hover:border-blue-500 transition-all">
-                                {user?.user_metadata?.avatar_url ? (
-                                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                    <User size={24} className="text-slate-400" />
-                                )}
+                                <User size={24} className="text-slate-400" />
                             </div>
                         </div>
                     </div>
