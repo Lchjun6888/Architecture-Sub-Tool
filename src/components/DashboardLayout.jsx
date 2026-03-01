@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import HelpGuide from './HelpGuide';
 
-const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user }) => {
+const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() =>
         document.documentElement.classList.contains('dark') || localStorage.getItem('darkMode') === 'true'
@@ -58,9 +58,8 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
         }
     };
 
-    const isAdmin = user?.email === 'lsmith5695@gmail.com';
-    const isProPlan = user?.user_metadata?.plan === 'pro' || isAdmin;
-    const displayName = user?.user_metadata?.full_name || 'Architect';
+    const isProPlan = true;
+    const displayName = 'Architect';
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans overflow-x-hidden">
@@ -98,15 +97,10 @@ const DashboardLayout = ({ children, onBack, onNav, activeNav, onLogout, user })
 
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800/50">
-                        <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Current Plan</p>
-                        <p className="text-sm font-black dark:text-white">{isProPlan ? 'ArchSub Pro' : 'Free Plan'}</p>
-                        <button
-                            onClick={() => window.open('https://quakkabuild.gumroad.com/l/archsubtools?_gl=1*5xt88k*_ga*MTc0MzQ4MDg5NS4xNzcxNjg5MzEw*_ga_6LJN6D94N6*czE3NzE2OTI4OTYkbzIkZzEkdDE3NzE2OTQ0MDUkajYwJGwwJGgw', '_blank')}
-                            className="mt-3 w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 hover:bg-blue-600 transition-all"
-                        >
-                            Manage Plan
-                        </button>
+                        <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Status</p>
+                        <p className="text-sm font-black dark:text-white">ArchSub Pro (Unlocked)</p>
                     </div>
+
 
                     <button
                         onClick={handleLogoutClick}

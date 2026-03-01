@@ -8,15 +8,11 @@ import PDFComparer from './components/PDFComparer';
 import SettingsView from './components/SettingsView';
 import DailyLogView from './components/DailyLogView';
 import PayrollView from './components/PayrollView';
-import Auth from './components/Auth';
-import { supabase } from './supabaseClient';
 
 function App() {
-  const [session, setSession] = useState(null);
   const [view, setView] = useState('landing');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Initial dark mode setup
@@ -26,58 +22,14 @@ function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-
-    if (!supabase) {
-      console.warn('Supabase client not initialized. Check environment variables.');
-      setLoading(false);
-      return;
-    }
-
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) setIsLoggedIn(true);
-      setLoading(false);
-    }).catch(err => {
-      console.error('Session check error:', err);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      if (session) {
-        setIsLoggedIn(true);
-        // Force view change to dashboard on sign in to prevent getting stuck
-        if (event === 'SIGNED_IN') {
-          setView('dashboard');
-        }
-      } else {
-        setIsLoggedIn(false);
-        setView('landing');
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const handleStart = () => {
-    if (isLoggedIn) {
-      setView('dashboard');
-    } else {
-      setView('auth');
-    }
-  };
-
-  const handleAuthSuccess = () => {
     setView('dashboard');
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     setView('landing');
-    setIsLoggedIn(false);
   };
 
   if (loading) {
@@ -91,30 +43,20 @@ function App() {
     );
   }
 
-  if (view === 'auth' && !isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
-        <Auth onAuthSuccess={handleAuthSuccess} />
-      </div>
-    );
-  }
-
-  if (isLoggedIn && view !== 'landing') {
+  if (view !== 'landing') {
     return (
       <DashboardLayout
         onBack={() => setView('landing')}
         activeNav={view === 'dashboard' ? 'overview' : view}
         onNav={setView}
         onLogout={handleLogout}
-        user={session?.user}
       >
-        {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} user={session?.user} /> : null}
-        {view === 'excel' ? <ExcelSplitter user={session?.user} /> : null}
-        {view === 'pdf' ? <PDFComparer user={session?.user} /> : null}
-        {view === 'daily' ? <DailyLogView user={session?.user} /> : null}
-
+        {view === 'dashboard' || view === 'overview' ? <DashboardOverview onNav={setView} /> : null}
+        {view === 'excel' ? <ExcelSplitter /> : null}
+        {view === 'pdf' ? <PDFComparer /> : null}
+        {view === 'daily' ? <DailyLogView /> : null}
         {view === 'payroll' ? <PayrollView /> : null}
-        {view === 'settings' ? <SettingsView user={session?.user} /> : null}
+        {view === 'settings' ? <SettingsView /> : null}
       </DashboardLayout>
     );
   }
@@ -123,3 +65,4 @@ function App() {
 }
 
 export default App;
+

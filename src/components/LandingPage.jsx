@@ -46,12 +46,6 @@ const LandingPage = ({ onStart }) => {
                     <span className="text-xl font-black tracking-tight dark:text-white group-hover:text-blue-500 transition-colors">ArchSub</span>
                 </div>
                 <div className="flex gap-4">
-                    <button
-                        onClick={scrollToPricing}
-                        className="text-sm font-semibold text-slate-500 hover:text-blue-500 transition-colors"
-                    >
-                        Pricing
-                    </button>
                     <button onClick={onStart} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-500/30 active:scale-95">
                         Get Started
                     </button>
@@ -126,84 +120,50 @@ const LandingPage = ({ onStart }) => {
             {/* Pricing Section */}
             <section id="pricing-section" className="py-20 px-6">
                 <div className="max-w-4xl mx-auto text-center space-y-12">
-                    <h2 className="text-4xl font-black dark:text-white">Transparent Pricing</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Free Plan */}
-                        <div className="glass p-8 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-6 text-left flex flex-col h-full transform hover:scale-[1.02] transition-all">
-                            <div className="flex-1">
-                                <h4 className="text-lg font-bold dark:text-white">Free Plan</h4>
-                                <div className="text-3xl font-black dark:text-white mt-2">$0 <span className="text-sm font-normal text-slate-500">/ forever</span></div>
-                                <p className="text-sm text-slate-500 mt-4 leading-relaxed">Perfect for simple tasks and individual users exploring the platform.</p>
-                                <ul className="space-y-4 mt-8">
-                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <span>Split up to 500 rows per file</span>
-                                    </li>
-                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <span>Standard Header persistence (4 rows)</span>
-                                    </li>
-                                    <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                        <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <span>Basic Row-based splitting</span>
-                                    </li>
-                                    <li className="flex items-start gap-3 text-sm text-slate-400">
-                                        <CheckCircle size={18} className="text-slate-300 shrink-0 mt-0.5" />
-                                        <span>Local browser processing only</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <button onClick={onStart} className="w-full py-4 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
-                                Current Plan
-                            </button>
-                        </div>
-
-                        {/* Pro Plan */}
-                        <div className="bg-slate-900 border-4 border-blue-500 p-8 rounded-2xl space-y-6 text-left relative overflow-hidden flex flex-col h-full transform hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20">
+                    <h2 className="text-4xl font-black dark:text-white">Professional Tools, Now Free</h2>
+                    <div className="flex justify-center">
+                        {/* Pro Plan - Refactored as Free */}
+                        <div className="bg-slate-900 border-4 border-emerald-500 p-8 rounded-2xl space-y-6 text-left relative overflow-hidden flex flex-col max-w-lg transform hover:scale-[1.02] transition-all shadow-2xl shadow-emerald-500/20">
                             <div className="absolute top-0 right-0 overflow-hidden w-32 h-32 pointer-events-none">
-                                <div className="absolute top-6 -right-8 w-32 bg-blue-500 text-white text-[10px] font-black py-1.5 text-center rotate-45 shadow-lg uppercase tracking-widest">POPULAR</div>
+                                <div className="absolute top-6 -right-8 w-32 bg-emerald-500 text-white text-[10px] font-black py-1.5 text-center rotate-45 shadow-lg uppercase tracking-widest">UNLOCKED</div>
                             </div>
 
                             <div className="flex-1">
                                 <div className="text-white">
                                     <h4 className="text-lg font-bold flex items-center gap-2">
-                                        Pro Plan <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                                        ArchSub Pro <Star size={16} className="text-yellow-400 fill-yellow-400" />
                                     </h4>
-                                    <div className="text-4xl font-black mt-2">$9.9 <span className="text-sm font-normal text-blue-300">/ month</span></div>
-                                    <p className="text-sm text-slate-400 mt-4 leading-relaxed">For architects, engineers, and data professionals who need efficiency.</p>
+                                    <div className="text-4xl font-black mt-2">$0 <span className="text-sm font-normal text-emerald-300">/ forever</span></div>
+                                    <p className="text-sm text-slate-400 mt-4 leading-relaxed">All professional architecture & construction tools are now freely accessible to everyone.</p>
                                 </div>
                                 <ul className="space-y-4 mt-8">
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
-                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
                                         <span>Unlimited rows & sheets processing</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
-                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>Smart Logic: Keyword-based splitting (Total/Subtotal)</span>
+                                        <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Smart Logic: Keyword-based splitting</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
-                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
                                         <span>Real-time Full Editing: Edit directly in preview</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-blue-100">
-                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                                        <span>Custom Naming: Use cell data for filenames</span>
-                                    </li>
-                                    <li className="flex items-start gap-3 text-sm text-blue-100">
-                                        <CheckCircle size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
                                         <span>Multi-page PDF Comparison Tool</span>
                                     </li>
-                                    <li className="flex items-start gap-3 text-sm text-emerald-400 font-bold">
+                                    <li className="flex items-start gap-3 text-sm text-blue-100">
                                         <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                                        <span>24/7 Priority VIP Support</span>
+                                        <span>Local Privacy: Your data never leaves the browser</span>
                                     </li>
                                 </ul>
                             </div>
                             <button
-                                onClick={() => window.open('https://gumroad.com/', '_blank')}
-                                className="w-full py-4 bg-blue-500 text-white font-black rounded-xl hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/40 active:scale-95 flex items-center justify-center gap-2 group"
+                                onClick={onStart}
+                                className="w-full py-4 bg-emerald-500 text-white font-black rounded-xl hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/40 active:scale-95 flex items-center justify-center gap-2 group"
                             >
-                                Get Started with ArchSub Pro <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                Get Started Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
                     </div>

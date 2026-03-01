@@ -5,8 +5,8 @@ import RuleConfigurator from './components/RuleConfigurator';
 import DataPreviewer from './components/DataPreviewer';
 import ExportSection from './components/ExportSection';
 
-const ExcelSplitter = ({ user }) => {
-    const isProPlan = user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com';
+const ExcelSplitter = () => {
+    const isProPlan = true;
     const {
         step, setStep,
         rowsPerFile, setRowsPerFile,

@@ -11,8 +11,8 @@ import {
     History
 } from 'lucide-react';
 
-const DashboardOverview = ({ onNav, user }) => {
-    const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Architect';
+const DashboardOverview = ({ onNav }) => {
+    const firstName = 'Architect';
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">

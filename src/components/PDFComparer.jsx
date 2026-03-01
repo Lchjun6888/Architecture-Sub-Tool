@@ -11,9 +11,9 @@ import {
 // Set worker source for PDF.js - Using .min.mjs for version 5+ compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-const PDFComparer = ({ user }) => {
+const PDFComparer = () => {
     // --- State ---
-    const isProPlan = user?.user_metadata?.plan === 'pro' || user?.email === 'lsmith5695@gmail.com';
+    const isProPlan = true;
     const [fileBefore, setFileBefore] = useState(null);
     const [fileAfter, setFileAfter] = useState(null);
     const [isComparing, setIsComparing] = useState(false);
